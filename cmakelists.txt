@@ -1,0 +1,49 @@
+cmake_minimum_required(VERSION 3.22)
+project(PCF_ReBirth VERSION 0.1.0)
+
+add_subdirectory("G:/projekte/rebirth338 pcf/JUCE" "JUCE_build")
+
+juce_add_plugin(PCF_ReBirth
+    PLUGIN_MANUFACTURER_CODE Manu
+    PLUGIN_CODE Pcfr
+    FORMATS VST3 Standalone
+    PRODUCT_NAME "PCF ReBirth"
+    IS_SYNTH FALSE
+    NEEDS_MIDI_INPUT TRUE
+    NEEDS_MIDI_OUTPUT FALSE
+)
+
+juce_generate_juce_header(PCF_ReBirth)
+
+target_sources(PCF_ReBirth PRIVATE
+    Source/PluginProcessor.cpp
+    Source/PluginEditor.cpp
+    Source/StepSequencer.cpp
+    Source/StepSequencer.h
+    Source/PresetManager.cpp
+    Source/PresetManager.h
+    Source/AboutDialog.h
+    Source/AboutDialog.cpp
+    Source/PresetBrowserPanel.h
+    Source/PresetBrowserPanel.cpp
+)
+
+target_compile_definitions(PCF_ReBirth PUBLIC
+    JUCE_WEB_BROWSER=0
+    JUCE_USE_CURL=0
+    JUCE_VST3_CAN_REPLACE_VST2=0
+)
+
+# Embed binary resources (SVG logo)
+juce_add_binary_data(PCF_Resources SOURCES "pcf_rebirth_logo.svg")
+target_link_libraries(PCF_ReBirth PRIVATE PCF_Resources)
+
+target_link_libraries(PCF_ReBirth PRIVATE
+    juce::juce_audio_utils
+    juce::juce_dsp
+)
+
+target_link_libraries(PCF_ReBirth PUBLIC
+    juce::juce_recommended_config_flags
+    juce::juce_recommended_warning_flags
+)
