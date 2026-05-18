@@ -15,8 +15,7 @@ It combines a highly flexible 16-step sequencer with sophisticated filter emulat
 | Interface | Presets |
 | :---: | :---: |
 | ![Main Interface](img/pcf_ui.jpg) | ![Presets](img/pcf_presets.jpg) |
-| :---: |
-| ![Main Interface](img/automationclip.jpg |
+| ![Automationclip](img/automationclip.jpg |
 
 \## ✨ Features
 
