@@ -1,6 +1,6 @@
 # PCF Rebirth
 
-**PCF Rebirth** is a pattern controlled filter inspired by the PCF from Rebirth 338.
+**PCF Rebirth** is a pattern controlled filter inspired by the Pattern Controlled Filter (PCF) from Propellerhead ReBirth 338.
 It combines a highly flexible 16-step sequencer with sophisticated filter emulations to create evolving, rhythmic textures.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
@@ -8,11 +8,11 @@ It combines a highly flexible 16-step sequencer with sophisticated filter emulat
 
 ## 📸 Preview
 
-| Interface | Presets |
+| Main Interface | Preset Browser |
 | :---: | :---: |
 | ![Main Interface](img/pcf_ui.jpg) | ![Presets](img/pcf_presets.jpg) |
 
-| Automation |
+| DAW Automation |
 | :---: |
 | ![Automationclip](img/automationclip.jpg) |
 
@@ -25,15 +25,10 @@ It combines a highly flexible 16-step sequencer with sophisticated filter emulat
 - **Visual Feedback:** Real-time indication of active steps and current playback position.
 
 ### 🎛️ Powerful Filtering
-- **Two Filter Algorithms:** Choose between the **SVF (State Variable Filter)** for clean, 
-  precise filtering, or the **Moog Ladder** for a warm, characterful sound inspired by 
-  classic analog synthesizer topologies.
-- **Three Filter Modes:** Each algorithm offers **Lowpass (LP)**, **Bandpass (BP)**, and 
-  **Highpass (HP)** outputs — six combinations in total.
-- **Dynamic Cutoff:** The cutoff frequency is modulated by the sequencer's gate and accent 
-  levels for organic, rhythmic movement.
-- **High Precision:** Sample-accurate timing and smoothed parameter ramps to prevent 
-  digital clicks.
+- **Two Filter Algorithms:** Choose between the **SVF (State Variable Filter)** for clean, precise filtering, or the **Moog Ladder** for a warm, characterful sound inspired by classic analog synthesizer topologies.
+- **Three Filter Modes:** Each algorithm offers **Lowpass (LP)**, **Bandpass (BP)**, and **Highpass (HP)** outputs — six combinations in total.
+- **Dynamic Cutoff:** The cutoff frequency is modulated by the sequencer's gate and accent levels for organic, rhythmic movement.
+- **High Precision:** Sample-accurate timing and smoothed parameter ramps to prevent digital clicks.
 
 ### 💾 Preset Management
 - **Factory Presets:** Includes a curated collection of Acid, Techno, Ambient, Industrial, and Experimental patterns.
@@ -42,7 +37,7 @@ It combines a highly flexible 16-step sequencer with sophisticated filter emulat
 ## 🛠 Technical Details
 - **Framework:** Built with [JUCE Framework version 8](https://juce.com/).
 - **Language:** C++
-- **Architecture:** Optimized for low-latency real-time audio processing using double-buffered state management to ensure thread safety between the UI and Audio threads.
+- **Architecture:** Optimized for low-latency real-time audio processing. Parameter changes are communicated to the audio thread via atomic reads and smoothed ramps, ensuring thread safety without locks.
 - **License:** MIT License.
 
 ## 🚀 Installation & Usage
@@ -56,22 +51,15 @@ It combines a highly flexible 16-step sequencer with sophisticated filter emulat
 
 ### How to use
 1. **Set the Tempo:** Use the BPM display. You can manually enter a value or toggle **SYNC** to follow your DAW's transport.
-2. **Program the Sequence:** 
-   - Click the **Step Buttons** (numbered 1-16) to turn gates on/off.
-   - Adjust the **Vertical Sliders** below each button to change the pitch per step.
-3. **Sculpt the Sound:** Select a filter algorithm (**SVF** or **MOOG**) and mode 
-   (**LP / BP / HP**), then use the **Freq**, **Q Amt**, and **Env Mod** knobs to 
-   shape the filter's character.
+2. **Program the Sequence:**
+   - Click the **Step Buttons** (numbered 1–16) to turn gates on/off.
+   - Adjust the **Vertical Sliders** below each button to set the pitch per step.
+3. **Sculpt the Sound:** Select a filter algorithm (**SVF** or **MOOG**) and mode (**LP / BP / HP**), then use the **Freq**, **Q Amt**, and **Env Mod** knobs to shape the filter's character.
 4. **Adjust the Sequence:**
    - Set the **Pattern Length** (1–16 steps) to define how many steps are played.
    - Use the **Slew** knob to control the attack and decay of the gate modulation.
    - Toggle **RUN** to start or stop the sequencer independently of the DAW transport.
-5. **Manage Presets:** Use the preset browser at the bottom to navigate factory sounds 
-   or load a starting point. Customize freely and use **SAVE AS** to store your own 
-   patterns as user presets.
-
-## 🤝 Contributing
-Contributions are welcome! If you find a bug or have a feature request, please open an issue or submit a pull request.
+5. **Manage Presets:** Use the preset browser at the bottom to navigate factory sounds or load a starting point. Customize freely and use **SAVE AS** to store your own patterns as user presets.
 
 ## 📜 License
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
