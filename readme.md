@@ -1,6 +1,6 @@
 # PCF Rebirth
 
-**PCF Rebirth** is a pattern controlled filter inspired by the Pattern Controlled Filter (PCF) from Propellerhead ReBirth 338.
+**PCF Rebirth** is a pattern controlled VST3 filter inspired by the Pattern Controlled Filter (PCF) from Propellerhead ReBirth 338.
 It combines a highly flexible 16-step sequencer with sophisticated filter emulations to create evolving, rhythmic textures.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
