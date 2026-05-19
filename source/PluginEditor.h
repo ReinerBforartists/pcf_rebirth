@@ -361,7 +361,10 @@ private:
   juce::TextButton bypassButton;
   juce::AudioProcessorValueTreeState::ButtonAttachment bypassAttach;
 
-  juce::TextButton filterModeLp, filterModeBp, filterModeMoog;
+  // Reihe 1: Filterarchitektur
+  juce::TextButton filterArchSvf, filterArchMoog;
+  // Reihe 2: Ausgangspol
+  juce::TextButton filterSlopeLp, filterSlopeBp, filterSlopeHp;
   juce::Slider patternLengthSlider;
   juce::AudioProcessorValueTreeState::SliderAttachment patternLengthAttach;
 

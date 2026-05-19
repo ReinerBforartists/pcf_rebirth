@@ -30,7 +30,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PCFProcessor::createParamete
   params.push_back(std::make_unique<juce::AudioParameterBool>("sequencerRun", "Sequencer Run", true));
   params.push_back(std::make_unique<juce::AudioParameterBool>("syncToHost", "Sync To Host", true));
   params.push_back(std::make_unique<juce::AudioParameterChoice>("filterMode", "Filter Mode",
-      juce::StringArray { "LP", "BP", "MOOG" }, 1));
+      juce::StringArray { "SVF-LP", "SVF-BP", "SVF-HP", "MOOG-LP", "MOOG-BP", "MOOG-HP" }, 1));
   params.push_back(std::make_unique<juce::AudioParameterFloat>("patternLength", "Pattern Length",
       juce::NormalisableRange<float>(1.f, 16.f, 1.f), 16.f));
 
@@ -240,7 +240,7 @@ void PCFProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuff
         // Recompute tan/sin only when the cutoff frequency has actually changed.
         if (safeCutoff != cachedSafeCutoff) {
             cachedSafeCutoff = safeCutoff;
-            if (filterMode == 2)
+            if (filterMode >= 3)
                 cachedG = std::tan(juce::MathConstants<double>::pi * static_cast<double>(safeCutoff) * invSr);
             else
                 cachedF = 2.0 * std::sin(juce::MathConstants<double>::pi * static_cast<double>(safeCutoff) * invSr);
@@ -252,7 +252,7 @@ void PCFProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuff
             double inputRaw     = static_cast<double>(data[i]) * drive;
             double inputClipped = std::tanh(inputRaw);
 
-            if (filterMode == 2) {
+            if (filterMode >= 3) {
                 double g = juce::jlimit(0.0, moogGMaxLimit, cachedG);
                 const double resonance = juce::jlimit(0.0, moogResLimit, static_cast<double>(qAmt));
 
@@ -285,7 +285,18 @@ void PCFProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuff
                 V[ch][2] = V2;
                 V[ch][3] = V3;
 
-                data[i] = static_cast<float>(V3 * outputGain);
+                // Slope-aware Moog output
+                double moogOut;
+                if (filterMode == 3)       // MOOG-LP: klassischer V3-Ausgang
+                    moogOut = V3;
+                else if (filterMode == 4)  // MOOG-BP: Differenz zwischen Stufe 3 und 4
+                    moogOut = (V2 - V3) * 2.0;
+                else                       // MOOG-HP: Komplementär (Eingang minus Tiefpass)
+                    moogOut = u - V3;
+
+                // Resonanz-Lautstärkekompensation: hohe Q-Werte zehren Bassvolumen auf
+                const double resonanceComp = 1.0 + resonance * 0.65;
+                data[i] = static_cast<float>(moogOut * outputGain * resonanceComp);
             } else {
                 double f = juce::jlimit<double>(0.0, svfBandLimit, cachedF);
                 double q = 1.4 - static_cast<double>(qAmt) * 1.35;
@@ -297,7 +308,7 @@ void PCFProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuff
                 svfLow[ch]  = low;
                 svfBand[ch] = band;
 
-                double out = (filterMode == 1) ? band : low;
+                double out = (filterMode == 1) ? band : (filterMode == 2) ? high : low;
                 data[i] = static_cast<float>(out * outputGain);
             }
         }

@@ -114,20 +114,30 @@ PCFEditor::PCFEditor(PCFProcessor& p)
   lengthLabel.setText("LENGTH", juce::dontSendNotification);
   addAndMakeVisible(lengthLabel);
 
-  // --- Filter Mode Buttons ---
-  auto setupModeBtn = [&](juce::TextButton& btn, const juce::String& label, int mode) {
+  // --- Filter Mode Buttons (Architektur + Slope) ---
+  auto setupModeBtn = [&](juce::TextButton& btn, const juce::String& label, std::function<void()> cb) {
     btn.setButtonText(label);
     btn.setClickingTogglesState(false);
     btn.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff26263a));
-    btn.onClick = [this, mode]() {
-      if (auto* param = processor.apvts.getParameter("filterMode"))
-        param->setValueNotifyingHost(processor.apvts.getParameterRange("filterMode").convertTo0to1((float)mode));
-    };
+    btn.onClick = cb;
     addAndMakeVisible(btn);
   };
-  setupModeBtn(filterModeLp,   "LP",   0);
-  setupModeBtn(filterModeBp,   "BP",   1);
-  setupModeBtn(filterModeMoog, "MOOG", 2);
+
+  // Hilfsfunktionen: aktuelle Architektur (0=SVF, 1=MOOG) und Slope (0=LP,1=BP,2=HP) lesen
+  auto getArch  = [this]() { return (int)processor.apvts.getRawParameterValue("filterMode")->load() / 3; };
+  auto getSlope = [this]() { return (int)processor.apvts.getRawParameterValue("filterMode")->load() % 3; };
+
+  auto setFilterMode = [this](int arch, int slope) {
+    int mode = arch * 3 + slope;
+    if (auto* param = processor.apvts.getParameter("filterMode"))
+      param->setValueNotifyingHost(processor.apvts.getParameterRange("filterMode").convertTo0to1((float)mode));
+  };
+
+  setupModeBtn(filterArchSvf,  "SVF",  [=]() { setFilterMode(0, getSlope()); });
+  setupModeBtn(filterArchMoog, "MOOG", [=]() { setFilterMode(1, getSlope()); });
+  setupModeBtn(filterSlopeLp,  "LP",   [=]() { setFilterMode(getArch(), 0); });
+  setupModeBtn(filterSlopeBp,  "BP",   [=]() { setFilterMode(getArch(), 1); });
+  setupModeBtn(filterSlopeHp,  "HP",   [=]() { setFilterMode(getArch(), 2); });
 
   // --- Pattern Length Slider ---
   patternLengthSlider.setSliderStyle(juce::Slider::LinearHorizontal);
@@ -407,13 +417,17 @@ void PCFEditor::timerCallback() {
   sequencerRunButton.setToggleState(processor.apvts.getRawParameterValue("sequencerRun")->load() > 0.5f, juce::dontSendNotification);
 
   // 3. Update Filter Mode Highlights
-  const int mode = (int)processor.apvts.getRawParameterValue("filterMode")->load();
+  const int mode  = (int)processor.apvts.getRawParameterValue("filterMode")->load();
+  const int arch  = mode / 3;
+  const int slope = mode % 3;
   auto highlight = [this](juce::TextButton& btn, bool active) {
     btn.setColour(juce::TextButton::buttonColourId, active ? juce::Colour(0xBF3d8eff) : juce::Colour(0xff26263a));
   };
-  highlight(filterModeLp,   mode == 0);
-  highlight(filterModeBp,   mode == 1);
-  highlight(filterModeMoog, mode == 2);
+  highlight(filterArchSvf,  arch  == 0);
+  highlight(filterArchMoog, arch  == 1);
+  highlight(filterSlopeLp,  slope == 0);
+  highlight(filterSlopeBp,  slope == 1);
+  highlight(filterSlopeHp,  slope == 2);
 
   // 4. Update Step Visuals (Active step & Alpha)
   const int currentStep = processor.getStepSequencer().getCurrentStep();
@@ -475,8 +489,11 @@ void PCFEditor::paint(juce::Graphics& g) {
   label("Q AMT", qAmtKnob);
   label("MOD",   envModKnob);
   label("SLEW",  slewTimeKnob);
-  label("MODE",  filterModeLp);
   label("BPM",   tempoDisplay);
+
+  // ALGO über SVF/MOOG-Spalte, MODE über LP/BP/HP-Spalte
+  g.drawText("ALGO", filterArchSvf.getX(), (int)topLabelY, filterArchSvf.getWidth(), 16, juce::Justification::centred);
+  g.drawText("MODE", filterSlopeLp.getX(), (int)topLabelY, filterSlopeLp.getWidth(), 16, juce::Justification::centred);
 
   if (logoDrawable != nullptr) {
       auto bounds = logoDrawable->getBounds();
@@ -523,12 +540,17 @@ void PCFEditor::resized() {
   envModKnob.setBounds (190, topY, knobW, knobH);
   slewTimeKnob.setBounds(280, topY, knobW, knobH);
 
-  filterModeLp.setBounds  (380, topY + 8 , 44, 20);
-  filterModeBp.setBounds  (380, topY + 34, 44, 20);
-  filterModeMoog.setBounds(380, topY + 60, 44, 20);
+  // Reihe 1: Architektur (SVF / MOOG) — linke Spalte
+  filterArchSvf.setBounds  (380, topY + 8,  44, 20);
+  filterArchMoog.setBounds (380, topY + 34, 44, 20);
 
-  tempoDisplay.setBounds    (440, topY + 8 , 60, 20);
-  syncToHostButton.setBounds(440, topY + 33, 70, 22);
+  // Reihe 2: Slope (LP / BP / HP) — rechte Spalte
+  filterSlopeLp.setBounds  (430, topY + 8,  36, 20);
+  filterSlopeBp.setBounds  (430, topY + 34, 36, 20);
+  filterSlopeHp.setBounds  (430, topY + 60, 36, 20);
+
+  tempoDisplay.setBounds    (480, topY + 8 , 60, 20);
+  syncToHostButton.setBounds(480, topY + 33, 70, 22);
 
   bypassButton.setBounds    (659, topY + 8, 74, 44);
   logoBounds = juce::Rectangle<int>(645, 78, 98, 26);
