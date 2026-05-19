@@ -25,9 +25,15 @@ It combines a highly flexible 16-step sequencer with sophisticated filter emulat
 - **Visual Feedback:** Real-time indication of active steps and current playback position.
 
 ### 🎛️ Powerful Filtering
-- **Filter Modes:** Choose between classic **Lowpass (LP)**, **Bandpass (BP)**, or a rich **Moog-style Ladder Filter** emulation.
-- **Dynamic Cutoff:** The cutoff frequency is modulated by the sequencer's gate and accent levels for organic movement.
-- **High Precision:** Sample-accurate timing and smoothed parameter ramps to prevent digital clicks.
+- **Two Filter Algorithms:** Choose between the **SVF (State Variable Filter)** for clean, 
+  precise filtering, or the **Moog Ladder** for a warm, characterful sound inspired by 
+  classic analog synthesizer topologies.
+- **Three Filter Modes:** Each algorithm offers **Lowpass (LP)**, **Bandpass (BP)**, and 
+  **Highpass (HP)** outputs — six combinations in total.
+- **Dynamic Cutoff:** The cutoff frequency is modulated by the sequencer's gate and accent 
+  levels for organic, rhythmic movement.
+- **High Precision:** Sample-accurate timing and smoothed parameter ramps to prevent 
+  digital clicks.
 
 ### 💾 Preset Management
 - **Factory Presets:** Includes a curated collection of Acid, Techno, Ambient, Industrial, and Experimental patterns.
@@ -53,8 +59,16 @@ It combines a highly flexible 16-step sequencer with sophisticated filter emulat
 2. **Program the Sequence:** 
    - Click the **Step Buttons** (numbered 1-16) to turn gates on/off.
    - Adjust the **Vertical Sliders** below each button to change the pitch per step.
-3. **Sculpt the Sound:** Use the **Freq**, **Q Amt**, and **Env Mod** knobs to shape the filter's character.
-4. **Manage Presets:** Use the preset browser at the bottom to navigate factory sounds or use the "SAVE AS" button to store your own patterns.
+3. **Sculpt the Sound:** Select a filter algorithm (**SVF** or **MOOG**) and mode 
+   (**LP / BP / HP**), then use the **Freq**, **Q Amt**, and **Env Mod** knobs to 
+   shape the filter's character.
+4. **Adjust the Sequence:**
+   - Set the **Pattern Length** (1–16 steps) to define how many steps are played.
+   - Use the **Slew** knob to control the attack and decay of the gate modulation.
+   - Toggle **RUN** to start or stop the sequencer independently of the DAW transport.
+5. **Manage Presets:** Use the preset browser at the bottom to navigate factory sounds 
+   or load a starting point. Customize freely and use **SAVE AS** to store your own 
+   patterns as user presets.
 
 ## 🤝 Contributing
 Contributions are welcome! If you find a bug or have a feature request, please open an issue or submit a pull request.
