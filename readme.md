@@ -43,10 +43,14 @@ It combines a highly flexible 16-step sequencer with sophisticated filter emulat
 ## 🚀 Installation & Usage
 
 ### Installation
-1. Download the latest release for your operating system (Windows/macOS).
-2. Copy the plugin file (`.vst3`, `.component`, or `.au`) into your DAW's plugin folder:
+The windows installer should be self explaining. 
+In case you prefer the zipfile, or want to use the VST3 at MacOS or Linux:
+1. Download the Zipfile. Extract it.
+2. Place the VST3 plugin file into the official plugin folder:
    - **Windows:** `C:\Program Files\Common Files\VST3`
    - **macOS:** `/Library/Audio/Plug-Ins/Components` or `/Library/Audio/Plug-Ins/VST3`
+   - **Linux**: `/usr/lib/vst3/` or `/usr/lib64/vst3/`
+
 3. Scan for new plugins in your Digital Audio Workstation (Ableton Live, FL Studio, Logic Pro, Bitwig, etc.).
 
 ### How to use
