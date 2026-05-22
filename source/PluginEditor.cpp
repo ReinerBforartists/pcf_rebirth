@@ -145,6 +145,36 @@ PCFEditor::PCFEditor(PCFProcessor& p)
   patternLengthSlider.setRange(1.0, 16.0, 1.0);
   addAndMakeVisible(patternLengthSlider);
 
+  // --- Randomization Controls ---
+  randomEnableButton.setButtonText("RAND");
+  randomEnableButton.setClickingTogglesState(true);
+  randomEnableButton.setColour(juce::ToggleButton::textColourId,        juce::Colour(0xff9a9ab0));
+  randomEnableButton.setColour(juce::ToggleButton::tickColourId,        juce::Colour(0xff3d8eff));
+  randomEnableButton.setColour(juce::ToggleButton::tickDisabledColourId,juce::Colour(0xff5a5a7a));
+  randomEnableButton.onStateChange = [this]() {
+    processor.getStepSequencer().setRandomEnabled(randomEnableButton.getToggleState());
+  };
+  addAndMakeVisible(randomEnableButton);
+
+  randomAmountSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+  randomAmountSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 18);
+  randomAmountSlider.setRange(0.0, 48.0, 1.0);
+  randomAmountSlider.setValue(3.0);
+  randomAmountSlider.setColour(juce::Slider::trackColourId,            juce::Colour(0xff3d8eff));
+  randomAmountSlider.setColour(juce::Slider::thumbColourId,            juce::Colour(0xff3d8eff));
+  randomAmountSlider.setColour(juce::Slider::backgroundColourId,       juce::Colour(0xff26263a));
+  randomAmountSlider.setColour(juce::Slider::textBoxTextColourId,      juce::Colour(0xffc8c8d8));
+  randomAmountSlider.setColour(juce::Slider::textBoxBackgroundColourId,juce::Colour(0xff1a1a24));
+  randomAmountSlider.setColour(juce::Slider::textBoxOutlineColourId,   juce::Colours::transparentBlack);
+  randomAmountSlider.textFromValueFunction = [](double v) {
+    return juce::String((int)v) + " st";
+  };
+  randomAmountSlider.onValueChange = [this]() {
+    // Normalize 0-24 range to 0.0-1.0 for the sequencer
+    processor.getStepSequencer().setRandomAmount((float)randomAmountSlider.getValue() / 48.0f);
+  };
+  addAndMakeVisible(randomAmountSlider);
+
   // --- Step Gate Buttons & Pitch Sliders ---
   for (int i = 0; i < numSteps; ++i) {
     juce::String idx = juce::String(i);
@@ -559,6 +589,10 @@ void PCFEditor::resized() {
   sequencerRunButton.setBounds ( 10, seqCtrlY,  50, 22);
   lengthLabel.setBounds        ( 65, seqCtrlY,  45, 22);
   patternLengthSlider.setBounds(115, seqCtrlY, 160, 22);
+
+  // RAND toggle + amount slider, right of pattern length
+  randomEnableButton.setBounds (285, seqCtrlY,  70, 22);
+  randomAmountSlider.setBounds (355, seqCtrlY, 140, 22);
 
   const int seqLeft = 10;
   const int stepW   = (getWidth() - 20) / numSteps;

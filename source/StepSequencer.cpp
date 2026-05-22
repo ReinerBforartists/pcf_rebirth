@@ -38,11 +38,16 @@ StepSequencer::StepSequencer() {
       active.gates[i]    = false;
       active.slides[i]   = false;
     }
-    // Keep pending in sync initially
+    // Keep pending and randomizedActive in sync initially
     pending.pitches[i] = active.pitches[i];
     pending.accents[i] = active.accents[i];
     pending.gates[i]   = active.gates[i];
     pending.slides[i]  = active.slides[i];
+
+    randomizedActive.pitches[i] = active.pitches[i];
+    randomizedActive.accents[i] = active.accents[i];
+    randomizedActive.gates[i]   = active.gates[i];
+    randomizedActive.slides[i]  = active.slides[i];
   }
 
   glidedPitch           = active.pitches[0];
@@ -103,6 +108,16 @@ void StepSequencer::processSample(float slewTimeMs) {
   // are reflected immediately on the next playback start.
   applyPendingStepData();
 
+  // Commit active→basePattern on audio thread where active is authoritative.
+  if (commitBaseNow.exchange(false)) {
+    basePattern      = active;
+    randomizedActive = active;
+  }
+
+  // If randomization was just enabled, immediately populate randomizedActive
+  if (randomizeNow.exchange(false))
+    applyRandomizationToNext();
+
   if (!running.load(std::memory_order_relaxed))
     return;
 
@@ -143,15 +158,23 @@ void StepSequencer::processSample(float slewTimeMs) {
 // --- Step Advancement & Timing ---
 void StepSequencer::advanceStep() {
   ++currentStep;
-  if (currentStep >= patternLength)
+  if (currentStep >= patternLength) {
     currentStep = 0;
+    // At every loop boundary, optionally mutate the next pass.
+    if (randomEnabled.load(std::memory_order_relaxed))
+      applyRandomizationToNext();
+  }
 
   updateCurrentValues();
 }
 
 void StepSequencer::updateCurrentValues() {
   if (currentStep < maxPatternLength) {
-    currentPitch  = active.pitches[currentStep];
+    // When randomization is active, read pitches from the randomized buffer
+    // but gates/accents from active (user controls rhythm, sequencer mutates pitch).
+    const StepData& pitchSource = randomEnabled.load(std::memory_order_relaxed)
+                                  ? randomizedActive : active;
+    currentPitch  = pitchSource.pitches[currentStep];
     currentAccent = active.accents[currentStep];
     currentGate   = active.gates[currentStep];
   }
@@ -173,4 +196,40 @@ void StepSequencer::updateTiming() {
     if (samplesPerStep < 1.0)
       samplesPerStep = 1.0;
   }
+}
+
+// Called on the audio thread at each loop boundary when randomization is on.
+// Derives the next loop's pitches from basePattern so drift never accumulates.
+void StepSequencer::applyRandomizationToNext() {
+  const float amt = randomAmount.load(std::memory_order_relaxed);
+
+  // Always sync gates/accents from active so rhythm stays correct.
+  for (int i = 0; i < patternLength; ++i) {
+    randomizedActive.gates[i]   = active.gates[i];
+    randomizedActive.accents[i] = active.accents[i];
+    randomizedActive.slides[i]  = active.slides[i];
+  }
+
+  if (amt <= 0.0f) {
+    // No mutation — copy pitches straight from basePattern.
+    for (int i = 0; i < patternLength; ++i)
+      randomizedActive.pitches[i] = basePattern.pitches[i];
+    return;
+  }
+
+  // maxOffset in semitones: amt=0 → ±1st, amt=1.0 → ±48st
+  const float maxOffset = 1.0f + amt * 47.0f;
+
+  for (int i = 0; i < patternLength; ++i) {
+    float roll = static_cast<float>(nextRng() & 0xFFFF) / 65535.0f;
+    if (roll < amt * 0.9f) {
+      // Random offset in [-maxOffset, +maxOffset], in semitones
+      float r   = (static_cast<float>(nextRng() & 0xFFFF) / 65535.0f) * 2.0f - 1.0f;
+      float off = r * maxOffset;
+      randomizedActive.pitches[i] = juce::jlimit(-24.0f, 24.0f, basePattern.pitches[i] + off);
+    } else {
+      randomizedActive.pitches[i] = basePattern.pitches[i];
+    }
+  }
+  // No swapPending touch — randomizedActive is audio-thread-only.
 }

@@ -26,7 +26,21 @@ class StepSequencer {
   void setStep(int index, float pitch, float accent, bool slide, bool gate);
 
   void setPatternLength(int steps) { pendingPatternLength.store(juce::jlimit(1, 32, steps)); }
-  int getPatternLength() const { return patternLength; }
+
+  void setRandomEnabled(bool on) {
+    randomEnabled.store(on);
+    if (on)
+      randomizeNow.store(true); // audio thread will call applyRandomizationToNext() immediately
+  }
+  void setRandomAmount(float amt) { randomAmount.store(juce::jlimit(0.0f, 1.0f, amt)); }
+  bool getRandomEnabled() const   { return randomEnabled.load(); }
+  float getRandomAmount() const   { return randomAmount.load(); }
+
+  // Call from UI thread whenever a step is edited or a preset is loaded,
+  // so the base anchor stays in sync with user intent.
+  void commitBasePattern() {
+    commitBaseNow.store(true); // audio thread will copy active→basePattern on next sample
+  }  int getPatternLength() const { return patternLength; }
   void setTempo(float bpm);
   void setRun(bool shouldRun) { running.store(shouldRun); }
   void resetPosition();
@@ -67,7 +81,6 @@ class StepSequencer {
   static constexpr float defaultAccent  = 0.7f;    // Default accent level
 
   // --- Double-Buffer ---
-  // All step data lives in this struct for easy atomic copying.
   struct StepData {
     float pitches[maxPatternLength];
     float accents[maxPatternLength];
@@ -75,14 +88,36 @@ class StepSequencer {
     bool  gates[maxPatternLength];
   };
 
-  // `active` is read-only on the audio thread.
-  // `pending` is written by the UI thread via setStep().
   StepData active;
   StepData pending;
+
+  // Separate buffer owned exclusively by the audio thread.
+  // applyRandomizationToNext() writes here; updateCurrentValues() reads
+  // from it when randomization is on. The normal active/pending swap
+  // is completely unaffected.
+  StepData randomizedActive;
 
   // Set to true by the UI thread after writing to `pending`.
   // Consumed (set to false) by the audio thread in applyPendingStepData().
   std::atomic<bool> swapPending { false };
+
+  // --- Randomization ---
+  // basePattern is a snapshot of the "intended" pattern, set whenever the
+  // user edits a step or loads a preset. Randomization always derives from
+  // this anchor so variation never drifts cumulatively over loops.
+  StepData basePattern;
+  std::atomic<float> randomAmount { 0.0f };
+  std::atomic<bool>  randomEnabled { false };
+  std::atomic<bool>  randomizeNow  { false };
+  std::atomic<bool>  commitBaseNow { false }; // audio thread commits active→basePattern
+
+  // Simple LCG — audio-thread only, no locking needed.
+  uint32_t rngState { 12345 };
+  uint32_t nextRng() {
+    rngState = rngState * 1664525u + 1013904223u;
+    return rngState;
+  }
+  void applyRandomizationToNext();
 
   // patternLength changes are also written atomically so no struct swap needed.
   std::atomic<int>  pendingPatternLength { 16 };

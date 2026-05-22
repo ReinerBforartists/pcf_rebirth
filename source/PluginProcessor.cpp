@@ -106,11 +106,15 @@ PCFProcessor::~PCFProcessor() {
 }
 
 // --- Parameter Change Handler ---
-void PCFProcessor::parameterChanged(const juce::String& /*parameterID*/, float /*newValue*/) {
-    // Parameter ID is unused here, marked to avoid warning
+void PCFProcessor::parameterChanged(const juce::String& parameterID, float /*newValue*/) {
     if (!isInternalLoading.load() && !isSaving.load()) {
         paramsDirty.store(true);
         isDirty.store(true);
+
+        // When the user edits a step directly, update the randomization anchor
+        // so mutations in subsequent loops are based on the new intended pattern.
+        if (parameterID.startsWith("stepPitch") || parameterID.startsWith("stepGate"))
+            stepSequencer.commitBasePattern();
     }
 }
 
@@ -178,9 +182,11 @@ void PCFProcessor::updateSequencerTiming() {
   int patLen = static_cast<int>(patternLengthPointer->load());
   stepSequencer.setPatternLength(patLen);
 
+  // Always push current APVTS values into the sequencer's normal active/pending path.
+  // Randomization reads from randomizedActive which is separate — no conflict.
   for (int i = 0; i < 16; ++i) {
     const float pitch = stepPitchPointers[i]->load();
-    const bool gate = stepGatePointers[i]->load() > 0.5f;
+    const bool  gate  = stepGatePointers[i]->load() > 0.5f;
     stepSequencer.setStep(i, pitch, stepSequencer.getAccentForStep(i),
                             stepSequencer.getSlideForStep(i), gate);
   }
@@ -360,28 +366,42 @@ void PCFProcessor::loadUserPreset(int index) {
 }
 
 void PCFProcessor::applyPresetToApvts(const SequencerPreset& preset) {
-  struct LoadingGuard {
-      std::atomic<bool>& flag;
-      LoadingGuard(std::atomic<bool>& f) : flag(f) { flag.store(true); }
-      ~LoadingGuard() { flag.store(false); }
-  } guard(isInternalLoading);
+  {
+    struct LoadingGuard {
+        std::atomic<bool>& flag;
+        LoadingGuard(std::atomic<bool>& f) : flag(f) { flag.store(true); }
+        ~LoadingGuard() { flag.store(false); }
+    } guard(isInternalLoading);
 
-  if (auto* param = apvts.getParameter("patternLength")) {
-    param->setValueNotifyingHost(apvts.getParameterRange("patternLength").convertTo0to1((float)preset.patternLength));
-  }
+    if (auto* param = apvts.getParameter("patternLength")) {
+      param->setValueNotifyingHost(apvts.getParameterRange("patternLength").convertTo0to1((float)preset.patternLength));
+    }
 
-  for (int i = 0; i < 16; ++i) {
-    juce::String idx = juce::String(i);
-    if (auto* pParam = apvts.getParameter("stepPitch" + idx)) {
-      pParam->setValueNotifyingHost(apvts.getParameterRange("stepPitch" + idx).convertTo0to1(preset.pitches[i]));
+    for (int i = 0; i < 16; ++i) {
+      juce::String idx = juce::String(i);
+      if (auto* pParam = apvts.getParameter("stepPitch" + idx)) {
+        pParam->setValueNotifyingHost(apvts.getParameterRange("stepPitch" + idx).convertTo0to1(preset.pitches[i]));
+      }
+      if (auto* gParam = apvts.getParameter("stepGate" + idx)) {
+        gParam->setValueNotifyingHost(apvts.getParameterRange("stepGate" + idx).convertTo0to1((float)preset.gates[i]));
+      }
     }
-    if (auto* gParam = apvts.getParameter("stepGate" + idx)) {
-      gParam->setValueNotifyingHost(apvts.getParameterRange("stepGate" + idx).convertTo0to1((float)preset.gates[i]));
-    }
-  }
+  } // LoadingGuard released here
 
   updateSequencerTiming();
   isDirty.store(false);
+
+  // Sync the sequencer pending buffer with the freshly loaded preset values,
+  // then commit as the randomization anchor. Must happen AFTER the loading guard
+  // is released so setStep calls aren't blocked.
+  for (int i = 0; i < 16; ++i) {
+    juce::String idx = juce::String(i);
+    const float pitch = apvts.getRawParameterValue("stepPitch" + idx)->load();
+    const bool  gate  = apvts.getRawParameterValue("stepGate"  + idx)->load() > 0.5f;
+    stepSequencer.setStep(i, pitch, stepSequencer.getAccentForStep(i),
+                            stepSequencer.getSlideForStep(i), gate);
+  }
+  stepSequencer.commitBasePattern();
 }
 
 // --- Preset Saving & Overwriting ---

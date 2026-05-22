@@ -368,7 +368,9 @@ private:
   juce::Slider patternLengthSlider;
   juce::AudioProcessorValueTreeState::SliderAttachment patternLengthAttach;
 
-  // --- Preset UI (Button + Panel replacement for ComboBox) ---
+  // --- Randomization ---
+  juce::ToggleButton randomEnableButton;
+  juce::Slider       randomAmountSlider;
   juce::TextButton presetDisplayButton;
   juce::TextButton prevPresetButton;
   juce::TextButton nextPresetButton;
