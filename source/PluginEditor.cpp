@@ -598,20 +598,22 @@ void PCFEditor::resized() {
   qAmtKnob.setBounds   (100, topY, knobW, knobH);
   envModKnob.setBounds (190, topY, knobW, knobH);
   slewTimeKnob.setBounds(280, topY, knobW, knobH);
-  gainKnob.setBounds    (370, topY, knobW, knobH);
 
-  // Reihe 1: Architektur (SVF / MOOG) — linke Spalte
-  filterArchSvf.setBounds  (460, topY + 8,  44, 20);
-  filterArchMoog.setBounds (460, topY + 34, 44, 20);
+  // Filter-Sektion (ALGO/MODE)
+  filterArchSvf.setBounds  (380, topY + 8,  44, 20);
+  filterArchMoog.setBounds (380, topY + 34, 44, 20);
+  filterSlopeLp.setBounds  (430, topY + 8,  36, 20);
+  filterSlopeBp.setBounds  (430, topY + 34, 36, 20);
+  filterSlopeHp.setBounds  (430, topY + 60, 36, 20);
 
-  // Reihe 2: Slope (LP / BP / HP) — rechte Spalte
-  filterSlopeLp.setBounds  (510, topY + 8,  36, 20);
-  filterSlopeBp.setBounds  (510, topY + 34, 36, 20);
-  filterSlopeHp.setBounds  (510, topY + 60, 36, 20);
+  // Tempo-Sektion
+  tempoDisplay.setBounds    (480, topY + 8 , 60, 20);
+  syncToHostButton.setBounds(480, topY + 33, 70, 22);
 
-  tempoDisplay.setBounds    (560, topY + 8 , 60, 20);
-  syncToHostButton.setBounds(560, topY + 33, 70, 22);
+  // --- GAIN KNOB: Positioned between Tempo and Bypass ---
+  gainKnob.setBounds        (560, topY, knobW, knobH);
 
+  // Bypass & Logo
   bypassButton.setBounds    (659, topY + 8, 74, 44);
   logoBounds = juce::Rectangle<int>(645, 78, 98, 26);
 

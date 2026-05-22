@@ -30,7 +30,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PCFProcessor::createParamete
   // Gain parameter: -inf to +12dB. We use a range where 0 is unity gain (0dB)
   // and -100 represents effectively silence (-inf).
   params.push_back(std::make_unique<juce::AudioParameterFloat>("gain", "Gain",
-      juce::NormalisableRange<float>(-100.f, 12.f, 0.1f), 0.f));
+      juce::NormalisableRange<float>(-48.f, 12.f, 0.1f), 0.f));
 
   params.push_back(std::make_unique<juce::AudioParameterBool>("bypass", "Bypass", false));
   params.push_back(std::make_unique<juce::AudioParameterBool>("sequencerRun", "Sequencer Run", true));
