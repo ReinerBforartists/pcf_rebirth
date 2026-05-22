@@ -594,24 +594,26 @@ void PCFEditor::resized() {
 
   const int knobW  = 80;
   const int knobH  = 80;
-  freqKnob.setBounds    ( 10, topY, knobW, knobH);
-  qAmtKnob.setBounds   (100, topY, knobW, knobH);
-  envModKnob.setBounds (190, topY, knobW, knobH);
-  slewTimeKnob.setBounds(280, topY, knobW, knobH);
 
-  // Filter-Sektion (ALGO/MODE)
-  filterArchSvf.setBounds  (380, topY + 8,  44, 20);
-  filterArchMoog.setBounds (380, topY + 34, 44, 20);
-  filterSlopeLp.setBounds  (430, topY + 8,  36, 20);
-  filterSlopeBp.setBounds  (430, topY + 34, 36, 20);
-  filterSlopeHp.setBounds  (430, topY + 60, 36, 20);
+  // Reduced spacing between function knobs from 13px to 10px
+  freqKnob.setBounds    ( 10, topY, knobW, knobH);
+  qAmtKnob.setBounds   (100, topY, knobW, knobH); // (10 + 80) + 10 = 100
+  envModKnob.setBounds (190, topY, knobW, knobH); // (100 + 80) + 10 = 190
+  slewTimeKnob.setBounds(280, topY, knobW, knobH); // (190 + 80) + 10 = 280
+
+  // Filter-Sektion (ALGO/MODE) - shifted slightly left to maintain flow
+  filterArchSvf.setBounds  (375, topY + 8,  44, 20);
+  filterArchMoog.setBounds (375, topY + 34, 44, 20);
+  filterSlopeLp.setBounds  (425, topY + 8,  36, 20);
+  filterSlopeBp.setBounds  (425, topY + 34, 36, 20);
+  filterSlopeHp.setBounds  (425, topY + 60, 36, 20);
 
   // Tempo-Sektion
-  tempoDisplay.setBounds    (480, topY + 8 , 60, 20);
-  syncToHostButton.setBounds(480, topY + 33, 70, 22);
+  tempoDisplay.setBounds    (475, topY + 8 , 60, 20);
+  syncToHostButton.setBounds(475, topY + 33, 70, 22);
 
-  // --- GAIN KNOB: Positioned between Tempo and Bypass ---
-  gainKnob.setBounds        (560, topY, knobW, knobH);
+  // Gain Knob - now has more breathing room from the logo
+  gainKnob.setBounds        (555, topY, knobW, knobH);
 
   // Bypass & Logo
   bypassButton.setBounds    (659, topY + 8, 74, 44);
