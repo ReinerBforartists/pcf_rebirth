@@ -192,6 +192,7 @@ PCFEditor::PCFEditor(PCFProcessor& p)
     stepPitchSliders[i].setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
     stepPitchSliders[i].setRange(-24.0, 24.0, 1.0);
     stepPitchSliders[i].setDoubleClickReturnValue(true, 0.0);
+    stepPitchSliders[i].setInterceptsMouseClicks(false, false);
     addAndMakeVisible(stepPitchSliders[i]);
     stepPitchAttachments[i] = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(p.apvts, "stepPitch" + idx, stepPitchSliders[i]);
   }
@@ -373,6 +374,30 @@ void PCFEditor::mouseDown(const juce::MouseEvent& e) {
       if (!presetMenuManager->getBounds().contains(e.getPosition()))
           presetMenuManager->setVisible(false);
   }
+}
+
+void PCFEditor::mouseDrag(const juce::MouseEvent& e) {
+    // Wir prüfen, über welchem Slider sich die Maus befindet
+    for (int i = 0; i < numSteps; ++i) {
+        if (stepPitchSliders[i].getBounds().contains(e.getPosition())) {
+            auto bounds = stepPitchSliders[i].getBounds();
+
+            // Berechnung der Y-Position relativ zur Höhe des Sliders
+            // e.y ist die absolute Position im Editor
+            float relativeY = (float)e.y - (float)bounds.getY();
+
+            // Normalisierung: 0.0 (oben/max) bis 1.0 (unten/min)
+            float norm = relativeY / (float)bounds.getHeight();
+
+            // Umrechnung auf den Bereich -24 bis +24
+            // Da oben im UI meistens der höchste Wert ist:
+            float value = 24.0f - (norm * 48.0f);
+
+            // Wert setzen und an Processor melden
+            stepPitchSliders[i].setValue(juce::jlimit(-24.0f, 24.0f, value), juce::sendNotification);
+            break;
+        }
+    }
 }
 
 void PCFEditor::textEditorFocusLost(juce::TextEditor&) {

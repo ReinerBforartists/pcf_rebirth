@@ -319,6 +319,7 @@ public:
   void resized() override;
   void timerCallback() override;
   void mouseDown(const juce::MouseEvent& e) override;
+  void mouseDrag(const juce::MouseEvent& e) override;
 
   void changeListenerCallback(juce::ChangeBroadcaster* source) override;
   void textEditorFocusLost(juce::TextEditor& editor) override;
