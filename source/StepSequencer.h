@@ -36,6 +36,10 @@ class StepSequencer {
   bool getRandomEnabled() const   { return randomEnabled.load(); }
   float getRandomAmount() const   { return randomAmount.load(); }
 
+  float getRandomizedPitchForStep(int i) const {
+    return (i >= 0 && i < maxPatternLength) ? randomizedActive.pitches[i] : 0.0f;
+  }
+
   // Call from UI thread whenever a step is edited or a preset is loaded,
   // so the base anchor stays in sync with user intent.
   void commitBasePattern() {

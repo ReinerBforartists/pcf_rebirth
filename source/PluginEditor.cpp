@@ -167,7 +167,7 @@ PCFEditor::PCFEditor(PCFProcessor& p)
   randomAmountSlider.setColour(juce::Slider::textBoxBackgroundColourId,juce::Colour(0xff1a1a24));
   randomAmountSlider.setColour(juce::Slider::textBoxOutlineColourId,   juce::Colours::transparentBlack);
   randomAmountSlider.textFromValueFunction = [](double v) {
-    return juce::String((int)v) + " st";
+    return juce::String((int)v);
   };
   randomAmountSlider.onValueChange = [this]() {
     // Normalize 0-24 range to 0.0-1.0 for the sequencer
@@ -556,6 +556,31 @@ void PCFEditor::paint(juce::Graphics& g) {
   for (int i = 0; i < numSteps; ++i) {
     const int x = seqLeft + i * stepW;
     g.drawHorizontalLine(pitchMid, (float)(x + 2), (float)(x + stepW - 3));
+  }
+
+  // Randomized pitch overlay — shown when RAND is active.
+  // Draws a small blue tick at the randomized pitch position for each step.
+  if (randomEnableButton.getToggleState()) {
+    const float pitchMin = -24.0f;
+    const float pitchMax =  24.0f;
+    const float pitchRange = pitchMax - pitchMin;
+    const int patLen = (int)patternLengthSlider.getValue();
+
+    for (int i = 0; i < numSteps; ++i) {
+      if (i >= patLen) continue;
+
+      const float randPitch = processor.getStepSequencer().getRandomizedPitchForStep(i);
+      // LinearVertical: top = max, bottom = min
+      const float norm = 1.0f - (randPitch - pitchMin) / pitchRange;
+      const int x = seqLeft + i * stepW;
+      const int tickY = pitchY + (int)(norm * pitchH);
+      const int tickX = x + 2;
+      const int tickW = stepW - 4;
+
+      // Filled blue tick — 3px high, full step width
+      g.setColour(juce::Colour(0xCC3d8eff));
+      g.fillRect(tickX, tickY - 1, tickW, 3);
+    }
   }
 }
 

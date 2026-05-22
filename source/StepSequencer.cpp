@@ -221,15 +221,9 @@ void StepSequencer::applyRandomizationToNext() {
   const float maxOffset = 1.0f + amt * 47.0f;
 
   for (int i = 0; i < patternLength; ++i) {
-    float roll = static_cast<float>(nextRng() & 0xFFFF) / 65535.0f;
-    if (roll < amt * 0.9f) {
-      // Random offset in [-maxOffset, +maxOffset], in semitones
-      float r   = (static_cast<float>(nextRng() & 0xFFFF) / 65535.0f) * 2.0f - 1.0f;
-      float off = r * maxOffset;
-      randomizedActive.pitches[i] = juce::jlimit(-24.0f, 24.0f, basePattern.pitches[i] + off);
-    } else {
-      randomizedActive.pitches[i] = basePattern.pitches[i];
-    }
+    float r   = (static_cast<float>(nextRng() & 0xFFFF) / 65535.0f) * 2.0f - 1.0f;
+    float off = r * maxOffset;
+    randomizedActive.pitches[i] = juce::jlimit(-24.0f, 24.0f, basePattern.pitches[i] + off);
   }
   // No swapPending touch — randomizedActive is audio-thread-only.
 }
