@@ -337,8 +337,8 @@ private:
   PCF_LookAndFeel myLookAndFeel;
 
   // --- Parameter Knobs & Attachments ---
-  HostContextKnob freqKnob, qAmtKnob, envModKnob, slewTimeKnob;
-  juce::AudioProcessorValueTreeState::SliderAttachment freqAttach, qAmtAttach, envModAttach, slewTimeAttach;
+  HostContextKnob freqKnob, qAmtKnob, envModKnob, slewTimeKnob, gainKnob;
+  juce::AudioProcessorValueTreeState::SliderAttachment freqAttach, qAmtAttach, envModAttach, slewTimeAttach, gainAttach;
 
   // --- Toggles & Display ---
   juce::ToggleButton syncToHostButton;

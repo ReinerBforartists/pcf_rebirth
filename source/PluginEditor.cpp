@@ -28,6 +28,7 @@ PCFEditor::PCFEditor(PCFProcessor& p)
       qAmtAttach        (p.apvts, "qAmt",         qAmtKnob),
       envModAttach      (p.apvts, "envMod",       envModKnob),
       slewTimeAttach    (p.apvts, "slewTime",     slewTimeKnob),
+      gainAttach        (p.apvts, "gain",         gainKnob),
       syncToHostAttach  (p.apvts, "syncToHost",  syncToHostButton),
       bypassAttach      (p.apvts, "bypass",        bypassButton),
       sequencerRunAttach(p.apvts, "sequencerRun", sequencerRunButton),
@@ -60,7 +61,7 @@ PCFEditor::PCFEditor(PCFProcessor& p)
   }
 
   // --- Setup Knobs ---
-  for (auto* knob : { &freqKnob, &qAmtKnob, &envModKnob, &slewTimeKnob }) {
+  for (auto* knob : { &freqKnob, &qAmtKnob, &envModKnob, &slewTimeKnob, &gainKnob }) {
     knob->setSliderStyle(juce::Slider::RotaryVerticalDrag);
     knob->setTextBoxStyle(juce::Slider::TextBoxBelow, false, 80, 20);
     knob->setPopupMenuEnabled(false); // HostContextKnob::mouseDown handles right-click
@@ -71,6 +72,7 @@ PCFEditor::PCFEditor(PCFProcessor& p)
     addAndMakeVisible(knob);
   }
   slewTimeKnob.setTextValueSuffix(" ms");
+  gainKnob.setTextValueSuffix(" dB");
 
   // --- Bypass Button ---
   bypassButton.setButtonText("BYPASS");
@@ -340,12 +342,13 @@ PCFEditor::PCFEditor(PCFProcessor& p)
   setSize(760, 440);
   startTimerHz(30);
 
-  // Wire up host context menus for the four main knobs.
+  // Wire up host context menus for the main knobs.
   struct KnobParam { HostContextKnob* knob; const char* id; };
   for (auto& kp : { KnobParam{&freqKnob,    "freq"},
                     KnobParam{&qAmtKnob,     "qAmt"},
                     KnobParam{&envModKnob,   "envMod"},
-                    KnobParam{&slewTimeKnob, "slewTime"} })
+                    KnobParam{&slewTimeKnob, "slewTime"},
+                    KnobParam{&gainKnob,     "gain"} })
   {
       kp.knob->setEditor(this);
       kp.knob->setLinkedParameter(p.apvts.getParameter(kp.id));
@@ -519,6 +522,7 @@ void PCFEditor::paint(juce::Graphics& g) {
   label("Q AMT", qAmtKnob);
   label("MOD",   envModKnob);
   label("SLEW",  slewTimeKnob);
+  label("GAIN",  gainKnob);
   label("BPM",   tempoDisplay);
 
   // ALGO über SVF/MOOG-Spalte, MODE über LP/BP/HP-Spalte
@@ -594,18 +598,19 @@ void PCFEditor::resized() {
   qAmtKnob.setBounds   (100, topY, knobW, knobH);
   envModKnob.setBounds (190, topY, knobW, knobH);
   slewTimeKnob.setBounds(280, topY, knobW, knobH);
+  gainKnob.setBounds    (370, topY, knobW, knobH);
 
   // Reihe 1: Architektur (SVF / MOOG) — linke Spalte
-  filterArchSvf.setBounds  (380, topY + 8,  44, 20);
-  filterArchMoog.setBounds (380, topY + 34, 44, 20);
+  filterArchSvf.setBounds  (460, topY + 8,  44, 20);
+  filterArchMoog.setBounds (460, topY + 34, 44, 20);
 
   // Reihe 2: Slope (LP / BP / HP) — rechte Spalte
-  filterSlopeLp.setBounds  (430, topY + 8,  36, 20);
-  filterSlopeBp.setBounds  (430, topY + 34, 36, 20);
-  filterSlopeHp.setBounds  (430, topY + 60, 36, 20);
+  filterSlopeLp.setBounds  (510, topY + 8,  36, 20);
+  filterSlopeBp.setBounds  (510, topY + 34, 36, 20);
+  filterSlopeHp.setBounds  (510, topY + 60, 36, 20);
 
-  tempoDisplay.setBounds    (480, topY + 8 , 60, 20);
-  syncToHostButton.setBounds(480, topY + 33, 70, 22);
+  tempoDisplay.setBounds    (560, topY + 8 , 60, 20);
+  syncToHostButton.setBounds(560, topY + 33, 70, 22);
 
   bypassButton.setBounds    (659, topY + 8, 74, 44);
   logoBounds = juce::Rectangle<int>(645, 78, 98, 26);

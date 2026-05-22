@@ -26,6 +26,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout PCFProcessor::createParamete
       juce::NormalisableRange<float>(5.f, 500.f, 0.1f, 0.3f), 40.f));
   params.push_back(std::make_unique<juce::AudioParameterFloat>("tempo", "Tempo",
       juce::NormalisableRange<float>(40.f, 200.f, 1.f), 120.f));
+
+  // Gain parameter: -inf to +12dB. We use a range where 0 is unity gain (0dB)
+  // and -100 represents effectively silence (-inf).
+  params.push_back(std::make_unique<juce::AudioParameterFloat>("gain", "Gain",
+      juce::NormalisableRange<float>(-100.f, 12.f, 0.1f), 0.f));
+
   params.push_back(std::make_unique<juce::AudioParameterBool>("bypass", "Bypass", false));
   params.push_back(std::make_unique<juce::AudioParameterBool>("sequencerRun", "Sequencer Run", true));
   params.push_back(std::make_unique<juce::AudioParameterBool>("syncToHost", "Sync To Host", true));
@@ -65,7 +71,7 @@ PCFProcessor::PCFProcessor()
   }
 
   const juce::StringArray mainParamIds = {
-    "freq", "qAmt", "envMod", "slewTime", "tempo",
+    "freq", "qAmt", "envMod", "slewTime", "tempo", "gain",
     "bypass", "sequencerRun", "syncToHost", "filterMode", "patternLength"
   };
 
@@ -90,7 +96,7 @@ PCFProcessor::PCFProcessor()
 // --- Destructor: Listener Cleanup ---
 PCFProcessor::~PCFProcessor() {
     const juce::StringArray mainParamIds = {
-      "freq", "qAmt", "envMod", "slewTime", "tempo",
+      "freq", "qAmt", "envMod", "slewTime", "tempo", "gain",
       "bypass", "sequencerRun", "syncToHost", "filterMode", "patternLength"
     };
 
@@ -215,6 +221,10 @@ void PCFProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuff
 
     float slewTimeMs = apvts.getRawParameterValue("slewTime")->load();
 
+    // Calculate linear gain from dB value
+    float gainDb = apvts.getRawParameterValue("gain")->load();
+    float linearGain = std::pow(10.0f, gainDb / 20.0f);
+
     // Cached filter coefficients – only recomputed when safeCutoff changes.
     float cachedSafeCutoff = -1.0f;
     double cachedG = 0.0;  // Moog
@@ -302,7 +312,7 @@ void PCFProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuff
 
                 // Resonanz-Lautstärkekompensation: hohe Q-Werte zehren Bassvolumen auf
                 const double resonanceComp = 1.0 + resonance * 0.65;
-                data[i] = static_cast<float>(moogOut * outputGain * resonanceComp);
+                data[i] = static_cast<float>(moogOut * outputGain * resonanceComp * linearGain);
             } else {
                 double f = juce::jlimit<double>(0.0, svfBandLimit, cachedF);
                 double q = 1.4 - static_cast<double>(qAmt) * 1.35;
@@ -315,7 +325,7 @@ void PCFProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuff
                 svfBand[ch] = band;
 
                 double out = (filterMode == 1) ? band : (filterMode == 2) ? high : low;
-                data[i] = static_cast<float>(out * outputGain);
+                data[i] = static_cast<float>(out * outputGain * linearGain);
             }
         }
     }
