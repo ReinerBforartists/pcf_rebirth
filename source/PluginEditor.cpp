@@ -550,7 +550,6 @@ void PCFEditor::paint(juce::Graphics& g) {
   label("GAIN",  gainKnob);
   label("BPM",   tempoDisplay);
 
-  // ALGO über SVF/MOOG-Spalte, MODE über LP/BP/HP-Spalte
   g.drawText("ALGO", filterArchSvf.getX(), (int)topLabelY, filterArchSvf.getWidth(), 16, juce::Justification::centred);
   g.drawText("MODE", filterSlopeLp.getX(), (int)topLabelY, filterSlopeLp.getWidth(), 16, juce::Justification::centred);
 
@@ -587,26 +586,34 @@ void PCFEditor::paint(juce::Graphics& g) {
     g.drawHorizontalLine(pitchMid, (float)(x + 2), (float)(x + stepW - 3));
   }
 
-  // Randomized pitch overlay — shown when RAND is active.
-  // Draws a small blue tick at the randomized pitch position for each step.
+  // Randomized pitch overlay
   if (randomEnableButton.getToggleState()) {
     const float pitchMin = -24.0f;
     const float pitchMax =  24.0f;
-    const float pitchRange = pitchMax - pitchMin;
+    const float pitchRange = pitchMax - pitchMin; // 48.0
     const int patLen = (int)patternLengthSlider.getValue();
+
+    // The visual thumb of a JUCE slider doesn't use the full height.
+    // We apply a scale factor to match the actual physical movement range.
+    const float visualScale = 0.87f;
+    const float effectiveH = static_cast<float>(pitchH) * visualScale;
+    const float offsetY = (static_cast<float>(pitchH) - effectiveH) * 0.5f;
 
     for (int i = 0; i < numSteps; ++i) {
       if (i >= patLen) continue;
 
       const float randPitch = processor.getStepSequencer().getRandomizedPitchForStep(i);
-      // LinearVertical: top = max, bottom = min
-      const float norm = 1.0f - (randPitch - pitchMin) / pitchRange;
+
+      // Normalization: -24 -> 0.0, +24 -> 1.0
+      float norm = (randPitch - pitchMin) / pitchRange;
+      norm = juce::jlimit(0.0f, 1.0f, norm);
+
+      // Calculate Y: Start at pitchY + offset, then move down based on (1.0 - norm)
       const int x = seqLeft + i * stepW;
-      const int tickY = pitchY + (int)(norm * pitchH);
+      const int tickY = static_cast<int>(pitchY + offsetY + (1.0f - norm) * effectiveH);
       const int tickX = x + 2;
       const int tickW = stepW - 4;
 
-      // Filled blue tick — 3px high, full step width
       g.setColour(juce::Colour(0xCC3d8eff));
       g.fillRect(tickX, tickY - 1, tickW, 3);
     }
