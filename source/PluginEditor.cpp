@@ -153,7 +153,7 @@ PCFEditor::PCFEditor(PCFProcessor& p)
   randomEnableButton.setColour(juce::ToggleButton::textColourId,        juce::Colour(0xff9a9ab0));
   randomEnableButton.setColour(juce::ToggleButton::tickColourId,        juce::Colour(0xff3d8eff));
   randomEnableButton.setColour(juce::ToggleButton::tickDisabledColourId,juce::Colour(0xff5a5a7a));
-  randomEnableButton.onStateChange = [this]() {
+  randomEnableButton.onClick = [this]() {
     processor.getStepSequencer().setRandomEnabled(randomEnableButton.getToggleState());
   };
   addAndMakeVisible(randomEnableButton);
