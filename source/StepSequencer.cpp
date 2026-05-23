@@ -47,6 +47,9 @@ StepSequencer::StepSequencer() {
     randomizedActive.accents[i] = active.accents[i];
     randomizedActive.gates[i]   = active.gates[i];
     randomizedActive.slides[i]  = active.slides[i];
+
+    // Initialise UI snapshot to match the default pattern
+    uiRandomPitchSnapshot[i].store(active.pitches[i], std::memory_order_relaxed);
   }
 
   glidedPitch           = active.pitches[0];
@@ -98,8 +101,14 @@ void StepSequencer::processSample(float slewTimeMs) {
   if (commitBaseNow.exchange(false)) {
     basePattern      = active;
     randomizedActive = active;
+    // Keep the UI snapshot in sync with the newly committed base pattern
+    for (int i = 0; i < patternLength; ++i)
+      uiRandomPitchSnapshot[i].store(active.pitches[i], std::memory_order_relaxed);
   }
 
+  // randomizeNow is set by setRandomEnabled(true) or setRandomAmount() for
+  // immediate feedback – consumed here so it takes effect within one sample,
+  // not delayed until the next step-0.
   if (randomizeNow.exchange(false))
     applyRandomizationToNext();
 
@@ -137,11 +146,19 @@ void StepSequencer::processSample(float slewTimeMs) {
 
 void StepSequencer::advanceStep() {
   ++currentStep;
-  if (currentStep >= patternLength) {
+  if (currentStep >= patternLength)
     currentStep = 0;
+
+  // Randomization fires at the START of each loop (step 0), so the new
+  // amount takes effect immediately at the next loop boundary rather than
+  // one full loop later.
+  // randomizeNow provides the one-shot kick when the user first enables RAND;
+  // after that, randomEnabled keeps it running every loop start.
+  if (currentStep == 0) {
     if (randomEnabled.load(std::memory_order_relaxed))
       applyRandomizationToNext();
   }
+
   updateCurrentValues();
 }
 
@@ -185,16 +202,18 @@ void StepSequencer::applyRandomizationToNext() {
   if (amt <= 0.0f) {
     for (int i = 0; i < patternLength; ++i)
       randomizedActive.pitches[i] = basePattern.pitches[i];
-    return;
+  } else {
+    const float maxOffset = amt * 48.0f;
+
+    for (int i = 0; i < patternLength; ++i) {
+      float r   = (static_cast<float>(nextRng() & 0xFFFF) / 65535.0f) * 2.0f - 1.0f;
+      float off = r * maxOffset;
+      randomizedActive.pitches[i] = juce::jlimit(-24.0f, 24.0f, basePattern.pitches[i] + off);
+    }
   }
 
-  // FIXED: Removed the "1.0f +" offset. Now it starts exactly at 0.
-  // Range is now linearly mapped from 0 to 48 semitones based on amt.
-  const float maxOffset = amt * 48.0f;
-
-  for (int i = 0; i < patternLength; ++i) {
-    float r   = (static_cast<float>(nextRng() & 0xFFFF) / 65535.0f) * 2.0f - 1.0f;
-    float off = r * maxOffset;
-    randomizedActive.pitches[i] = juce::jlimit(-24.0f, 24.0f, basePattern.pitches[i] + off);
-  }
+  // Publish the new pitches to the UI snapshot atomically so the UI thread
+  // always sees a consistent, fully-computed result – never a partial write.
+  for (int i = 0; i < patternLength; ++i)
+    uiRandomPitchSnapshot[i].store(randomizedActive.pitches[i], std::memory_order_relaxed);
 }

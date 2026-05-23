@@ -10,6 +10,7 @@
 #pragma once
 #include <juce_core/juce_core.h>
 #include <atomic>
+#include <array>
 
 // --- Public API ---
 class StepSequencer {
@@ -30,21 +31,32 @@ class StepSequencer {
   void setRandomEnabled(bool on) {
     randomEnabled.store(on);
     if (on)
-      randomizeNow.store(true); // audio thread will call applyRandomizationToNext() immediately
+      randomizeNow.store(true); // einmaliger Kick beim Einschalten – wird in advanceStep() konsumiert
   }
-  void setRandomAmount(float amt) { randomAmount.store(juce::jlimit(0.0f, 1.0f, amt)); }
+  void setRandomAmount(float amt) {
+    randomAmount.store(juce::jlimit(0.0f, 1.0f, amt));
+    if (randomEnabled.load())
+      randomizeNow.store(true); // re-randomise immediately on the audio thread
+  }
   bool getRandomEnabled() const   { return randomEnabled.load(); }
   float getRandomAmount() const   { return randomAmount.load(); }
 
+  // Reads from the UI snapshot – written atomically by the audio thread after
+  // each applyRandomizationToNext() call. Safe to call from the UI thread at
+  // any time without data races or flicker.
   float getRandomizedPitchForStep(int i) const {
-    return (i >= 0 && i < maxPatternLength) ? randomizedActive.pitches[i] : 0.0f;
+    return (i >= 0 && i < maxPatternLength)
+        ? uiRandomPitchSnapshot[i].load(std::memory_order_relaxed)
+        : 0.0f;
   }
 
   // Call from UI thread whenever a step is edited or a preset is loaded,
   // so the base anchor stays in sync with user intent.
   void commitBasePattern() {
     commitBaseNow.store(true); // audio thread will copy active→basePattern on next sample
-  }  int getPatternLength() const { return patternLength; }
+  }
+
+  int getPatternLength() const { return patternLength; }
   void setTempo(float bpm);
   void setRun(bool shouldRun) { running.store(shouldRun); }
   void resetPosition();
@@ -112,8 +124,17 @@ class StepSequencer {
   StepData basePattern;
   std::atomic<float> randomAmount { 0.0f };
   std::atomic<bool>  randomEnabled { false };
+
+  // Set by setRandomEnabled(true) for a one-shot kick on the audio thread.
+  // Also consumed in advanceStep() at loop wrap if still pending.
   std::atomic<bool>  randomizeNow  { false };
+
   std::atomic<bool>  commitBaseNow { false }; // audio thread commits active→basePattern
+
+  // UI-safe snapshot: written atomically by the audio thread after every
+  // applyRandomizationToNext() call. The UI thread reads only from here,
+  // never from randomizedActive directly, eliminating all data races.
+  std::array<std::atomic<float>, maxPatternLength> uiRandomPitchSnapshot;
 
   // Simple LCG — audio-thread only, no locking needed.
   uint32_t rngState { 12345 };
