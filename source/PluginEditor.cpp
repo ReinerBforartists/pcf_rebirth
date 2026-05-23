@@ -602,15 +602,15 @@ void PCFEditor::paint(juce::Graphics& g) {
     for (int i = 0; i < numSteps; ++i) {
       if (i >= patLen) continue;
 
-      const float randPitch = processor.getStepSequencer().getRandomizedPitchForStep(i);
+      const float randPitch = std::round(processor.getStepSequencer().getRandomizedPitchForStep(i));
 
       // Normalization: -24 -> 0.0, +24 -> 1.0
       float norm = (randPitch - pitchMin) / pitchRange;
       norm = juce::jlimit(0.0f, 1.0f, norm);
 
-      // Calculate Y: Start at pitchY + offset, then move down based on (1.0 - norm)
+      
       const int x = seqLeft + i * stepW;
-      const int tickY = static_cast<int>(pitchY + offsetY + (1.0f - norm) * effectiveH);
+      const int tickY = static_cast<int>(std::round(pitchY + offsetY + (1.0f - norm) * effectiveH));
       const int tickX = x + 2;
       const int tickW = stepW - 4;
 
