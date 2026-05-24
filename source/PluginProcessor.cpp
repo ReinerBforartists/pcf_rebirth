@@ -480,7 +480,7 @@ void PCFProcessor::loadPresetByIndex(int index) {
 
         const auto& entry = entries[index];
         if (entry.isFactory) loadFactoryPreset(entry.index);
-        else                 loadUserPreset(entry.index);
+        else                 loadUserPreset(entry.index - static_cast<int>(presetManager.getFactoryPresets().size()));
 
         syncActivePresetIndexToState();
     }
