@@ -301,7 +301,9 @@ void PresetManager::loadUserPresetsFromDisk() {
         std::unique_ptr<juce::XmlElement> xml = juce::XmlDocument::parse(file);
         if (xml == nullptr || !xml->hasTagName("PRESET")) continue;
 
-        preset.patternLength = xml->getIntAttribute("len", 16);
+        preset.patternLength  = xml->getIntAttribute("len", 16);
+        preset.randomEnabled  = xml->getIntAttribute("randomEnabled", 0) > 0;
+        preset.randomAmount   = (float)xml->getDoubleAttribute("randomAmount", 0.0);
 
         auto* pitchesNode = xml->getChildByName("PITCHES");
         if (pitchesNode != nullptr) {
@@ -340,6 +342,8 @@ int PresetManager::saveUserPreset(const SequencerPreset& preset) {
     juce::XmlElement root("PRESET");
     root.setAttribute("name", finalName);
     root.setAttribute("len", preset.patternLength);
+    root.setAttribute("randomEnabled", preset.randomEnabled ? 1 : 0);
+    root.setAttribute("randomAmount",  preset.randomAmount);
 
     auto* pitchesNode = root.createNewChildElement("PITCHES");
     juce::String pVals;
@@ -374,6 +378,8 @@ bool PresetManager::overwriteUserPreset(int index, const SequencerPreset& preset
     juce::XmlElement root("PRESET");
     root.setAttribute("name", preset.name);
     root.setAttribute("len", preset.patternLength);
+    root.setAttribute("randomEnabled", preset.randomEnabled ? 1 : 0);
+    root.setAttribute("randomAmount",  preset.randomAmount);
 
     auto* pitchesNode = root.createNewChildElement("PITCHES");
     juce::String pVals;

@@ -27,6 +27,8 @@ struct SequencerPreset {
     float pitches[16];
     bool gates[16];
     int patternLength;
+    bool randomEnabled = false;
+    float randomAmount = 0.0f;
 };
 
 //Manages factory presets (in-memory) and user presets (individual XML files).

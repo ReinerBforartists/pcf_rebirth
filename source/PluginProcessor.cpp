@@ -400,6 +400,8 @@ void PCFProcessor::applyPresetToApvts(const SequencerPreset& preset) {
 
   updateSequencerTiming();
   isDirty.store(false);
+  stepSequencer.setRandomEnabled(preset.randomEnabled);
+  stepSequencer.setRandomAmount(preset.randomAmount);
 
   // Sync the sequencer pending buffer with the freshly loaded preset values,
   // then commit as the randomization anchor. Must happen AFTER the loading guard
@@ -427,7 +429,9 @@ int PCFProcessor::saveCurrentAsUserPreset(const juce::String& presetName) {
   SequencerPreset newPreset;
   newPreset.name = presetName;
   newPreset.category = "User";
-  newPreset.patternLength = static_cast<int>(apvts.getRawParameterValue("patternLength")->load());
+  newPreset.patternLength  = static_cast<int>(apvts.getRawParameterValue("patternLength")->load());
+  newPreset.randomEnabled  = stepSequencer.getRandomEnabled();
+  newPreset.randomAmount   = stepSequencer.getRandomAmount();
 
   for (int i = 0; i < 16; ++i) {
     juce::String idx = juce::String(i);
@@ -452,7 +456,9 @@ bool PCFProcessor::overwriteCurrentUserPreset(int userIndex, const juce::String&
   SequencerPreset preset;
   preset.name = presetName;
   preset.category = "User";
-  preset.patternLength = static_cast<int>(apvts.getRawParameterValue("patternLength")->load());
+  preset.patternLength  = static_cast<int>(apvts.getRawParameterValue("patternLength")->load());
+  preset.randomEnabled  = stepSequencer.getRandomEnabled();
+  preset.randomAmount   = stepSequencer.getRandomAmount();
 
   for (int i = 0; i < 16; ++i) {
     juce::String idx = juce::String(i);
