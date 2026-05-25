@@ -406,8 +406,15 @@ void PCFEditor::textEditorFocusLost(juce::TextEditor&) {
 
 void PCFEditor::changeListenerCallback(juce::ChangeBroadcaster* source) {
   // React to changes from both the Processor (preset selection) and PresetManager (save/delete)
-  if (source == &processor || source == &processor.getPresetManager())
+  if (source == &processor || source == &processor.getPresetManager()) {
     updatePresetList();
+
+    // Sync randomization UI controls with the newly loaded preset state.
+    // Without this the button/slider show stale values and randomizeNow never fires.
+    const auto& seq = processor.getStepSequencer();
+    randomEnableButton.setToggleState(seq.getRandomEnabled(), juce::dontSendNotification);
+    randomAmountSlider.setValue(seq.getRandomAmount() * 48.0, juce::dontSendNotification);
+  }
 }
 
 void PCFEditor::updatePresetControls() {
