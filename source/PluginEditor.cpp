@@ -161,7 +161,7 @@ PCFEditor::PCFEditor(PCFProcessor& p)
   randomAmountSlider.setSliderStyle(juce::Slider::LinearHorizontal);
   randomAmountSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 44, 18);
   randomAmountSlider.setRange(0.0, 48.0, 1.0);
-  randomAmountSlider.setValue(3.0);
+  randomAmountSlider.setValue(p.getStepSequencer().getRandomAmount() * 48.0, juce::dontSendNotification);
   randomAmountSlider.setColour(juce::Slider::trackColourId,            juce::Colour(0xff3d8eff));
   randomAmountSlider.setColour(juce::Slider::thumbColourId,            juce::Colour(0xff3d8eff));
   randomAmountSlider.setColour(juce::Slider::backgroundColourId,       juce::Colour(0xff26263a));
@@ -409,8 +409,7 @@ void PCFEditor::changeListenerCallback(juce::ChangeBroadcaster* source) {
   if (source == &processor || source == &processor.getPresetManager()) {
     updatePresetList();
 
-    // Sync randomization UI controls with the newly loaded preset state.
-    // Without this the button/slider show stale values and randomizeNow never fires.
+    // Sync randomization controls with sequencer state (lives outside APVTS).
     const auto& seq = processor.getStepSequencer();
     randomEnableButton.setToggleState(seq.getRandomEnabled(), juce::dontSendNotification);
     randomAmountSlider.setValue(seq.getRandomAmount() * 48.0, juce::dontSendNotification);

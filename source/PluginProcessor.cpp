@@ -335,6 +335,8 @@ void PCFProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuff
 void PCFProcessor::getStateInformation(juce::MemoryBlock& state) {
   auto stateTree = apvts.copyState();
   stateTree.setProperty("presetIsDirty", isDirty.load(), nullptr);
+  stateTree.setProperty("randomEnabled", stepSequencer.getRandomEnabled(), nullptr);
+  stateTree.setProperty("randomAmount",  (double)stepSequencer.getRandomAmount(), nullptr);
   std::unique_ptr<juce::XmlElement> xml(stateTree.createXml());
   copyXmlToBinary(*xml, state);
 }
@@ -346,6 +348,8 @@ void PCFProcessor::setStateInformation(const void* stateInformation, int sizeInB
 
     // Restore the dirty flag before replacing state so we know whether the
     // user had unsaved modifications when the project was saved.
+    bool  randEnabled = (bool)stateTree.getProperty("randomEnabled", false);
+    float randAmount  = (float)(double)stateTree.getProperty("randomAmount", 0.0);
     bool wasDirty = (bool)stateTree.getProperty("presetIsDirty", false);
 
     // replaceState restores all APVTS parameters exactly as the user left them,
@@ -357,6 +361,14 @@ void PCFProcessor::setStateInformation(const void* stateInformation, int sizeInB
     // clean preset data.
     activePresetIndex = loadActivePresetIndexFromState();
     isDirty.store(wasDirty);
+
+    // Restore randomization state (lives outside APVTS).
+    // Restore randomization state (lives outside APVTS).
+    stepSequencer.setRandomEnabled(randEnabled);
+    stepSequencer.setRandomAmount(randAmount);
+
+    // Notify UI so rand controls and other state-driven visuals update immediately.
+    juce::MessageManager::callAsync([this] { sendChangeMessage(); });
   }
 }
 
