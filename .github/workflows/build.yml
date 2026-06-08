@@ -38,6 +38,8 @@ jobs:
       - name: VST3 Bundle vorbereiten
         run: |
           VST3_PATH=$(find build -name "*.vst3" -type d | head -1)
+          # Debug-Symbole entfernen
+          find "$VST3_PATH" -type f \( -name "*.dylib" -o ! -name "*.*" \) | xargs strip -x 2>/dev/null || true
           cp -r "$VST3_PATH" PCF_ReBirth.vst3
 
       - name: Artefakt hochladen
@@ -96,6 +98,8 @@ jobs:
       - name: VST3 Bundle vorbereiten
         run: |
           VST3_PATH=$(find build -name "*.vst3" -type d | head -1)
+          # Debug-Symbole entfernen
+          find "$VST3_PATH" -type f ! -name "*.*" | xargs strip 2>/dev/null || true
           cp -r "$VST3_PATH" PCF_ReBirth.vst3
 
       - name: Artefakt hochladen
