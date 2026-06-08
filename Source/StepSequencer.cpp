@@ -125,21 +125,21 @@ void StepSequencer::processSample(float slewTimeMs) {
 
   float targetPitch = currentGate ? currentPitch : 0.0f;
   float glideTau    = glideTimeMs * 0.001f;
-  float glideCoeff  = 1.0f - std::expf(-1.0f / (glideTau * srF));
+  float glideCoeff  = 1.0f - std::exp(-1.0f / (glideTau * srF));
   glidedPitch      += (targetPitch - glidedPitch) * glideCoeff;
   glidedPitchRatio  = std::pow(2.0f, glidedPitch / 12.0f);
 
   float tau        = slewTimeMs * 0.001f;
-  float gateCoeff  = 1.0f - std::expf(-1.0f / (tau * srF));
+  float gateCoeff  = 1.0f - std::exp(-1.0f / (tau * srF));
   float targetGate = currentGate ? 1.0f : 0.0f;
   smoothedGate    += (targetGate - smoothedGate) * gateCoeff;
 
-  float accentSlewCoeff  = 1.0f - std::expf(-1.0f / (srF * accentSlewMs * 0.001f));
+  float accentSlewCoeff  = 1.0f - std::exp(-1.0f / (srF * accentSlewMs * 0.001f));
   currentAccentSmoothed += (currentAccent - currentAccentSmoothed) * accentSlewCoeff;
 
   float targetEnv = smoothedGate;
-  float envCharge = 1.0f - std::expf(-1.0f / (srF * envChargeMs * 0.001f));
-  float envDecay  = 1.0f - std::expf(-1.0f / (tau * srF));
+  float envCharge = 1.0f - std::exp(-1.0f / (srF * envChargeMs * 0.001f));
+  float envDecay  = 1.0f - std::exp(-1.0f / (tau * srF));
   float envCoeff  = targetEnv > currentEnvAmount ? envCharge : envDecay;
   currentEnvAmount += (targetEnv - currentEnvAmount) * envCoeff;
 }
