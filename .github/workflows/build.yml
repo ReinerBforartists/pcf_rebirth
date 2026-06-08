@@ -12,7 +12,7 @@ jobs:
   # macOS – Universal Binary (Intel + Apple Silicon)
   # ──────────────────────────────────────────────
   build-macos:
-    runs-on: macos-14  # Apple Silicon runner, kann auch x86_64 cross-kompilieren
+    runs-on: macos-14
 
     steps:
       - name: Checkout
@@ -37,11 +37,10 @@ jobs:
 
       - name: VST3 Bundle einpacken
         run: |
-          cd build
-          # JUCE legt das Bundle typischerweise hier ab:
-          VST3_PATH=$(find . -name "*.vst3" -type d | head -1)
-          echo "Gefunden: $VST3_PATH"
-          zip -r ../PCF_ReBirth_macOS.zip "$VST3_PATH"
+          find build -name "*.vst3" -type d
+          VST3_PATH=$(find build -name "*.vst3" -type d | head -1)
+          cp -r "$VST3_PATH" PCF_ReBirth.vst3
+          zip -r PCF_ReBirth_macOS.zip PCF_ReBirth.vst3
 
       - name: Artefakt hochladen
         uses: actions/upload-artifact@v4
@@ -49,7 +48,6 @@ jobs:
           name: PCF_ReBirth_macOS
           path: PCF_ReBirth_macOS.zip
 
-      # Bei einem Release direkt als Asset anhängen
       - name: Release Asset hochladen
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
@@ -99,10 +97,10 @@ jobs:
 
       - name: VST3 Bundle einpacken
         run: |
-          cd build
-          VST3_PATH=$(find . -name "*.vst3" -type d | head -1)
-          echo "Gefunden: $VST3_PATH"
-          zip -r ../PCF_ReBirth_Linux.zip "$VST3_PATH"
+          find build -name "*.vst3" -type d
+          VST3_PATH=$(find build -name "*.vst3" -type d | head -1)
+          cp -r "$VST3_PATH" PCF_ReBirth.vst3
+          zip -r PCF_ReBirth_Linux.zip PCF_ReBirth.vst3
 
       - name: Artefakt hochladen
         uses: actions/upload-artifact@v4
@@ -110,7 +108,6 @@ jobs:
           name: PCF_ReBirth_Linux
           path: PCF_ReBirth_Linux.zip
 
-      # Bei einem Release direkt als Asset anhängen
       - name: Release Asset hochladen
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
