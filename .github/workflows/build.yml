@@ -35,27 +35,20 @@ jobs:
       - name: Bauen
         run: cmake --build build --config Release
 
-      - name: VST3 Bundle vorbereiten
-        run: |
-          # Bundle suchen und Inhalt anzeigen zur Kontrolle
-          find build -name "*.vst3" -type d
-          VST3_PATH=$(find build -name "*.vst3" -type d | head -1)
-          # Debug-Symbole entfernen
-          find "$VST3_PATH" -type f \( -name "*.dylib" -o ! -name "*.*" \) | xargs strip -x 2>/dev/null || true
-          # Bundle als Ganzes kopieren – Ordnername bleibt *.vst3
-          cp -r "$VST3_PATH" ./PCF_ReBirth.vst3
+      - name: Bundle prüfen
+        run: find build -name "*.vst3" -type d
 
       - name: Artefakt hochladen
         uses: actions/upload-artifact@v4
         with:
           name: PCF_ReBirth_macOS
-          path: PCF_ReBirth.vst3
+          path: build/PCF_ReBirth_artefacts/Release/VST3/PCF_ReBirth.vst3
 
       - name: Release Asset hochladen
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: PCF_ReBirth_macOS.zip
+          files: build/PCF_ReBirth_artefacts/Release/VST3/PCF_ReBirth.vst3
 
   # ──────────────────────────────────────────────
   # Linux – x86_64
@@ -98,24 +91,17 @@ jobs:
       - name: Bauen
         run: cmake --build build --config Release
 
-      - name: VST3 Bundle vorbereiten
-        run: |
-          # Bundle suchen und Inhalt anzeigen zur Kontrolle
-          find build -name "*.vst3"
-          VST3_PATH=$(find build -name "*.vst3" | head -1)
-          # Debug-Symbole entfernen
-          find "$VST3_PATH" -type f ! -name "*.*" | xargs strip 2>/dev/null || true
-          # Bundle als Ganzes kopieren – Ordnername bleibt *.vst3
-          cp -r "$VST3_PATH" ./PCF_ReBirth.vst3
+      - name: Bundle prüfen
+        run: find build -name "*.vst3"
 
       - name: Artefakt hochladen
         uses: actions/upload-artifact@v4
         with:
           name: PCF_ReBirth_Linux
-          path: PCF_ReBirth.vst3
+          path: build/PCF_ReBirth_artefacts/VST3/PCF_ReBirth.vst3
 
       - name: Release Asset hochladen
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: PCF_ReBirth_Linux.zip
+          files: build/PCF_ReBirth_artefacts/VST3/PCF_ReBirth.vst3
