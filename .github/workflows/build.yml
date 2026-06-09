@@ -5,14 +5,14 @@ on:
     branches: [main]
   release:
     types: [created]
-  workflow_dispatch: # Ermöglicht manuelles Starten
+  workflow_dispatch:
 
 jobs:
   # ──────────────────────────────────────────────
-  # macOS – Universal Binary (Intel + Apple Silicon)
+  # macOS – Universal Binary
   # ──────────────────────────────────────────────
   build-macos:
-    runs-on: macos-14 # Apple Silicon Runner (unterstützt Universal Binaries)
+    runs-on: macos-14
 
     steps:
       - name: Checkout Projekt
@@ -22,8 +22,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: juce-framework/JUCE
-          ref: 8.0.4 # Pass die Version an, falls du eine andere nutzt
-          path: JUCE # WICHTIG: Dein CMakeLists.txt erwartet JUCE genau hier
+          ref: 8.0.4
+          path: JUCE
 
       - name: CMake konfigurieren
         run: |
@@ -35,27 +35,38 @@ jobs:
       - name: Bauen
         run: cmake --build build --config Release
 
-      - name: VST3 Bundle isolieren
+      - name: VST3 Bundle isolieren und manuell zippen
         run: |
-          # Sucht den Ordner, der auf .vst3 endet und kopiert ihn an die Root
+          # 1. Den VST3-Ordner suchen
           VST3_PATH=$(find build -name "*.vst3" -type d | head -1)
-          echo "Gefundenes Bundle: $VST3_PATH"
+          echo "VST3 gefunden in: $VST3_PATH"
+
+          if [ -z "$VST3_PATH" ]; then
+            echo "Fehler: Kein .vst3 Ordner gefunden!"
+            exit 1
+          fi
+
+          # 2. Den Ordner an die Root kopieren und exakt benennen
           cp -r "$VST3_PATH" PCF_ReBirth.vst3
 
-          # Optional: Debug-Symbole entfernen, um die Datei kleiner zu machen
+          # 3. Debug-Symbole entfernen (macht die Datei kleiner)
           find PCF_ReBirth.vst3 -type f \( -name "*.dylib" -o ! -name "*.*" \) | xargs strip -x 2>/dev/null || true
+
+          # 4. MANUELL ZIPPEN: Nur den Ordner PCF_ReBirth.vst3 in das Zip packen
+          # Wir gehen in den Ordner, damit das Zip keine Root-Verzeichnisse enthält
+          zip -r PCF_ReBirth_macOS.zip PCF_ReBirth.vst3
 
       - name: Artefakt hochladen
         uses: actions/upload-artifact@v4
         with:
           name: PCF_ReBirth_macOS
-          path: PCF_ReBirth.vst3
+          path: PCF_ReBirth_macOS.zip # Wir laden JETZT die fertige Zip-Datei hoch, keinen Ordner!
 
       - name: Release Asset hochladen
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: PCF_ReBirth.vst3
+          files: PCF_ReBirth_macOS.zip
 
   # ──────────────────────────────────────────────
   # Linux – x86_64
@@ -78,43 +89,40 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            libasound2-dev \
-            libx11-dev \
-            libxinerama-dev \
-            libxext-dev \
-            libfreetype6-dev \
-            libwebkit2gtk-4.0-dev \
-            libglu1-mesa-dev \
-            libcurl4-openssl-dev \
-            libjack-jackd2-dev \
-            ladspa-sdk \
-            mesa-common-dev
+            libasound2-dev libx11-dev libxinerama-dev libxext-dev \
+            libfreetype6-dev libwebkit2gtk-4.0-dev libglu1-mesa-dev \
+            libcurl4-openssl-dev libjack-jackd2-dev ladspa-sdk mesa-common-dev zip
 
       - name: CMake konfigurieren
-        run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: Bauen
         run: cmake --build build --config Release
 
-      - name: VST3 Bundle isolieren
+      - name: VST3 Bundle isolieren und manuell zippen
         run: |
-          # Sucht den Ordner, der auf .vst3 endet und kopiert ihn an die Root
           VST3_PATH=$(find build -name "*.vst3" -type d | head -1)
-          echo "Gefundenes Bundle: $VST3_PATH"
-          cp -r "$VST3_PATH" PCF_ReBirth.vst3
+          echo "VST3 gefunden in: $VST3_PATH"
 
-          # Debug-Symbole entfernen
+          if [ -z "$VST3_PATH" ]; then
+            echo "Fehler: Kein .vst3 Ordner gefunden!"
+            exit 1
+          fi
+
+          cp -r "$VST3_PATH" PCF_ReBirth.vst3
           find PCF_ReBirth.vst3 -type f ! -name "*.*" | xargs strip 2>/dev/null || true
+
+          # MANUELL ZIPPEN
+          zip -r PCF_ReBirth_Linux.zip PCF_ReBirth.vst3
 
       - name: Artefakt hochladen
         uses: actions/upload-artifact@v4
         with:
           name: PCF_ReBirth_Linux
-          path: PCF_ReBirth.vst3
+          path: PCF_ReBirth_Linux.zip # Auch hier: Nur die Zip-Datei!
 
       - name: Release Asset hochladen
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: PCF_ReBirth.vst3
+          files: PCF_ReBirth_Linux.zip
