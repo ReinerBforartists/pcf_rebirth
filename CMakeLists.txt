@@ -29,7 +29,7 @@ juce_add_plugin(PCF_ReBirth
     PLUGIN_MANUFACTURER_CODE "RPrk"
     PLUGIN_CODE             "Pcfr"
     FORMATS                 VST3 Standalone
-    PRODUCT_NAME            "PCF ReBirth"
+    PRODUCT_NAME            "PCF_ReBirth"
     VERSION                 "1.0.1"
     IS_SYNTH                FALSE
     NEEDS_MIDI_INPUT        TRUE
