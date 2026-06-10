@@ -52,16 +52,8 @@ jobs:
           # 3. Trailing commas aus moduleinfo.json entfernen (ungültiges JSON, bricht manche DAWs)
           MODULEINFO="PCF_ReBirth.vst3/Contents/Resources/moduleinfo.json"
           if [ -f "$MODULEINFO" ]; then
-            python3 -c "
-import re, sys
-with open('$MODULEINFO', 'r') as f:
-    content = f.read()
-# Trailing commas vor } oder ] entfernen
-fixed = re.sub(r',(\s*[}\]])', r'\1', content)
-with open('$MODULEINFO', 'w') as f:
-    f.write(fixed)
-print('moduleinfo.json bereinigt')
-"
+            sed -i '' -E 's/,([[:space:]]*[}\]])/\1/g' "$MODULEINFO"
+            echo "moduleinfo.json bereinigt"
           fi
 
           # 4. Debug-Symbole entfernen (macht die Datei kleiner)
@@ -129,15 +121,8 @@ print('moduleinfo.json bereinigt')
           # Trailing commas aus moduleinfo.json entfernen (ungültiges JSON, bricht manche DAWs)
           MODULEINFO="PCF_ReBirth.vst3/Contents/Resources/moduleinfo.json"
           if [ -f "$MODULEINFO" ]; then
-            python3 -c "
-import re
-with open('$MODULEINFO', 'r') as f:
-    content = f.read()
-fixed = re.sub(r',(\s*[}\]])', r'\1', content)
-with open('$MODULEINFO', 'w') as f:
-    f.write(fixed)
-print('moduleinfo.json bereinigt')
-"
+            sed -i -E 's/,([[:space:]]*[}\]])/\1/g' "$MODULEINFO"
+            echo "moduleinfo.json bereinigt"
           fi
 
           find PCF_ReBirth.vst3 -type f ! -name "*.*" | xargs strip 2>/dev/null || true
