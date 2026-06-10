@@ -65,7 +65,7 @@ print('moduleinfo.json bereinigt')
           fi
 
           # 4. Debug-Symbole entfernen (macht die Datei kleiner)
-          find PCF_ReBirth.vst3 -type f \( -name "*.dylib" -o ! -name "*.*" \) | xargs strip -x 2>/dev/null || true
+          find PCF_ReBirth.vst3 -type f | grep -E "(\.dylib$|^[^.]*$)" | xargs strip -x 2>/dev/null || true
 
           # 5. MANUELL ZIPPEN: Nur den Ordner PCF_ReBirth.vst3 in das Zip packen
           # Wir gehen in den Ordner, damit das Zip keine Root-Verzeichnisse enthält
