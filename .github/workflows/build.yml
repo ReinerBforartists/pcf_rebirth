@@ -49,10 +49,25 @@ jobs:
           # 2. Den Ordner an die Root kopieren und exakt benennen
           cp -r "$VST3_PATH" PCF_ReBirth.vst3
 
-          # 3. Debug-Symbole entfernen (macht die Datei kleiner)
+          # 3. Trailing commas aus moduleinfo.json entfernen (ungültiges JSON, bricht manche DAWs)
+          MODULEINFO="PCF_ReBirth.vst3/Contents/Resources/moduleinfo.json"
+          if [ -f "$MODULEINFO" ]; then
+            python3 -c "
+import re, sys
+with open('$MODULEINFO', 'r') as f:
+    content = f.read()
+# Trailing commas vor } oder ] entfernen
+fixed = re.sub(r',(\s*[}\]])', r'\1', content)
+with open('$MODULEINFO', 'w') as f:
+    f.write(fixed)
+print('moduleinfo.json bereinigt')
+"
+          fi
+
+          # 4. Debug-Symbole entfernen (macht die Datei kleiner)
           find PCF_ReBirth.vst3 -type f \( -name "*.dylib" -o ! -name "*.*" \) | xargs strip -x 2>/dev/null || true
 
-          # 4. MANUELL ZIPPEN: Nur den Ordner PCF_ReBirth.vst3 in das Zip packen
+          # 5. MANUELL ZIPPEN: Nur den Ordner PCF_ReBirth.vst3 in das Zip packen
           # Wir gehen in den Ordner, damit das Zip keine Root-Verzeichnisse enthält
           zip -r PCF_ReBirth_macOS.zip PCF_ReBirth.vst3
 
@@ -110,6 +125,21 @@ jobs:
           fi
 
           cp -r "$VST3_PATH" PCF_ReBirth.vst3
+
+          # Trailing commas aus moduleinfo.json entfernen (ungültiges JSON, bricht manche DAWs)
+          MODULEINFO="PCF_ReBirth.vst3/Contents/Resources/moduleinfo.json"
+          if [ -f "$MODULEINFO" ]; then
+            python3 -c "
+import re
+with open('$MODULEINFO', 'r') as f:
+    content = f.read()
+fixed = re.sub(r',(\s*[}\]])', r'\1', content)
+with open('$MODULEINFO', 'w') as f:
+    f.write(fixed)
+print('moduleinfo.json bereinigt')
+"
+          fi
+
           find PCF_ReBirth.vst3 -type f ! -name "*.*" | xargs strip 2>/dev/null || true
 
           # MANUELL ZIPPEN
