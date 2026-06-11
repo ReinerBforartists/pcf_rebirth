@@ -37,33 +37,48 @@ jobs:
 
       - name: VST3 Bundle isolieren und manuell zippen
         run: |
-          # 1. Find the VST3 folder
+          # 1. Den VST3-Ordner suchen
           VST3_PATH=$(find build -name "*.vst3" -type d | head -1)
-          echo "VST3 found in: $VST3_PATH"
+          echo "VST3 gefunden in: $VST3_PATH"
 
           if [ -z "$VST3_PATH" ]; then
-            echo "Error: No .vst3 folder found!"
+            echo "Fehler: Kein .vst3 Ordner gefunden!"
             exit 1
           fi
 
-          # 2. Copy to root and rename
+          # 2. Den Ordner an die Root kopieren und exakt benennen
           cp -r "$VST3_PATH" PCF_ReBirth.vst3
 
-          # 3. FIX: Remove trailing commas from moduleinfo.json (JUCE Bug Fix)
-          # macOS sed requires an empty string for -i
-          sed -i '' 's/,\s*}/}/g; s/,\s*]/]/g' PCF_ReBirth.vst3/moduleinfo.json
+          # 2b. Trailing commas aus moduleinfo.json entfernen (ungültiges JSON, manche Hosts brechen daran)
+          MODULEINFO="PCF_ReBirth.vst3/Contents/Resources/moduleinfo.json"
+          if [ -f "$MODULEINFO" ]; then
+            python3 -c 'import re,sys; p=sys.argv[1]; c=open(p).read(); open(p,"w").write(re.sub(r",(\s*[}\]])", r"\1", c))' "$MODULEINFO"
+            python3 -c 'import json,sys; json.load(open(sys.argv[1])); print("moduleinfo.json: gueltiges JSON")' "$MODULEINFO"
+          fi
 
-          # 4. Strip debug symbols
+          # 3. Debug-Symbole entfernen (macht die Datei kleiner)
           find PCF_ReBirth.vst3 -type f \( -name "*.dylib" -o ! -name "*.*" \) | xargs strip -x 2>/dev/null || true
 
-          # 5. Zip the folder
+      - name: pluginval installieren
+        run: |
+          curl -L -o pluginval.zip https://github.com/Tracktion/pluginval/releases/latest/download/pluginval_macOS.zip
+          unzip -q pluginval.zip
+
+      - name: Plugin validieren (pluginval)
+        run: |
+          ./pluginval.app/Contents/MacOS/pluginval --validate PCF_ReBirth.vst3
+
+      - name: Zippen
+        run: |
+          # Nur den Ordner PCF_ReBirth.vst3 in das Zip packen
+          # Wir gehen in den Ordner, damit das Zip keine Root-Verzeichnisse enthält
           zip -r PCF_ReBirth_macOS.zip PCF_ReBirth.vst3
 
       - name: Artefakt hochladen
         uses: actions/upload-artifact@v4
         with:
           name: PCF_ReBirth_macOS
-          path: PCF_ReBirth_macOS.zip
+          path: PCF_ReBirth_macOS.zip # Wir laden JETZT die fertige Zip-Datei hoch, keinen Ordner!
 
       - name: Release Asset hochladen
         if: github.event_name == 'release'
@@ -105,29 +120,32 @@ jobs:
       - name: VST3 Bundle isolieren und manuell zippen
         run: |
           VST3_PATH=$(find build -name "*.vst3" -type d | head -1)
-          echo "VST3 found in: $VST3_PATH"
+          echo "VST3 gefunden in: $VST3_PATH"
 
           if [ -z "$VST3_PATH" ]; then
-            echo "Error: No .vst3 folder found!"
+            echo "Fehler: Kein .vst3 Ordner gefunden!"
             exit 1
           fi
 
           cp -r "$VST3_PATH" PCF_ReBirth.vst3
 
-          # 3. FIX: Remove trailing commas from moduleinfo.json (JUCE Bug Fix)
-          # Linux sed does not need the empty string for -i
-          sed -i 's/,\s*}/}/g; s/,\s*]/]/g' PCF_ReBirth.vst3/moduleinfo.json
+          # Trailing commas aus moduleinfo.json entfernen (ungültiges JSON, manche Hosts brechen daran)
+          MODULEINFO="PCF_ReBirth.vst3/Contents/Resources/moduleinfo.json"
+          if [ -f "$MODULEINFO" ]; then
+            python3 -c 'import re,sys; p=sys.argv[1]; c=open(p).read(); open(p,"w").write(re.sub(r",(\s*[}\]])", r"\1", c))' "$MODULEINFO"
+            python3 -c 'import json,sys; json.load(open(sys.argv[1])); print("moduleinfo.json: gueltiges JSON")' "$MODULEINFO"
+          fi
 
           find PCF_ReBirth.vst3 -type f ! -name "*.*" | xargs strip 2>/dev/null || true
 
-          # Zip the folder
+          # MANUELL ZIPPEN
           zip -r PCF_ReBirth_Linux.zip PCF_ReBirth.vst3
 
       - name: Artefakt hochladen
         uses: actions/upload-artifact@v4
         with:
           name: PCF_ReBirth_Linux
-          path: PCF_ReBirth_Linux.zip
+          path: PCF_ReBirth_Linux.zip # Auch hier: Nur die Zip-Datei!
 
       - name: Release Asset hochladen
         if: github.event_name == 'release'
