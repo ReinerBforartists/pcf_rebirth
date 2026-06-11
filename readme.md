@@ -47,9 +47,14 @@ The windows installer should be self explaining.
 In case you prefer the zipfile, or want to use the VST3 at MacOS or Linux:
 1. Download the Zipfile. Extract it.
 2. Place the VST3 plugin file into the official plugin folder:
-   - **Windows:** `C:\Program Files\Common Files\VST3`
-   - **macOS:** `/Library/Audio/Plug-Ins/Components` or `/Library/Audio/Plug-Ins/VST3`
+   - **Windows:** `C:\Program Files\Common Files\VST3`   
    - **Linux**: `/usr/lib/vst3/` or `/usr/lib64/vst3/`
+   - **macOS:** `/Library/Audio/Plug-Ins/VST3`
+
+    Note that since this plugin isn't notarized by Apple, macOS will quarantine it after download. Open Terminal and run:
+
+    bash   xattr -dr com.apple.quarantine /Library/Audio/Plug-Ins/VST3/PCF_ReBirth.vst3
+    (adjust the path if you used ~/Library/...)
 
 3. Scan for new plugins in your Digital Audio Workstation (Ableton Live, FL Studio, Logic Pro, Bitwig, etc.).
 
