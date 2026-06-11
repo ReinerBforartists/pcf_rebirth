@@ -1,0 +1,28 @@
+===============================================================================
+LICENSE NOTICE FOR BINARIES
+===============================================================================
+
+This software (the compiled binary/plugin) is distributed under the 
+GNU General Public License v3.0 (GPLv3).
+
+REASON FOR THIS LICENSE:
+This binary incorporates the JUCE Framework, which is licensed under the 
+GNU GPL v3.0. According to the terms of the GPLv3, any combined work 
+(such as this compiled plugin) must also be distributed under the GPLv3.
+
+SOURCE CODE:
+As required by the GPLv3, the source code for this project is available to the public.
+You can find the source code here:
+[https://github.com/ReinerBforartists/pcf_rebirth]
+
+NOTE REGARDING SOURCE LICENSE:
+While this compiled binary is distributed under the GPLv3, the original 
+source code is provided under the MIT License. This means the source code 
+itself can be used more flexibly in other projects that do not use the 
+JUCE framework.
+
+FULL GPLv3 TEXT:
+The full text of the GNU General Public License v3.0 can be found at:
+https://www.gnu.org/licenses/gpl-3.0.html
+
+===============================================================================
