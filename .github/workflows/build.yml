@@ -68,6 +68,11 @@ jobs:
         run: |
           ./pluginval.app/Contents/MacOS/pluginval --validate PCF_ReBirth.vst3
 
+      - name: Ad-hoc signieren
+        run: |
+          chmod +x PCF_ReBirth.vst3/Contents/MacOS/PCF_ReBirth
+          codesign --force --deep -s - PCF_ReBirth.vst3
+
       - name: Zippen
         run: |
           # Nur den Ordner PCF_ReBirth.vst3 in das Zip packen
