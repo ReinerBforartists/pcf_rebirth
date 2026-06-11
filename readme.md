@@ -66,7 +66,12 @@ In case you prefer the zipfile, or want to use the VST3 at MacOS or Linux:
 5. **Manage Presets:** Use the preset browser at the bottom to navigate factory sounds or load a starting point. Customize freely and use **SAVE AS** to store your own patterns as user presets.
 
 ## 📜 License
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+This project uses a dual-licensing approach:
+
+- **Source Code:** Licensed under the [MIT License](LICENSE). You are free to use, modify, and distribute the source code.
+- **Compiled Binaries:** Because this project is built using the JUCE framework, the compiled VST3 binaries are distributed under the [GNU GPL v3](GPL_LICENSE.txt).
+
+For more details on how this affects the distribution of the plugin, please see the [LICENSE_BINARY.txt](LICENSE_BINARY.txt) file.
 
 ---
 
