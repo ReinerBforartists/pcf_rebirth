@@ -53,11 +53,11 @@ void AboutDialog::setupUI()
 
     juce::String infoText;
     infoText << "Version 1.0.2\n\n"
-             << "Created by: Reiner Prokein\n"
-             << "License: MIT License\n"
-             << "Copyright © 2026 Reiner Prokein\n\n"
-             << "This software is free to use and open source\n"
-             << "It is inspired by the PCF module from Rebirth 338\n";
+         << "Created by: Reiner Prokein\n"
+         << "License: Distributed under GNU GPL v3 (Source: MIT License)\n"
+         << "Copyright © 2026 Reiner Prokein\n\n"
+         << "This software is free to use and open source\n"
+         << "It is inspired by the PCF module from Rebirth 338\n";
 
     infoLabel.setText(infoText, juce::dontSendNotification);
 }
