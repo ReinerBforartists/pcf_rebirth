@@ -97,12 +97,15 @@ PCFEditor::PCFEditor(PCFProcessor& p)
   tempoDisplay.setColour(juce::TextEditor::textColourId,             juce::Colour(0xffc8c8d8));
   tempoDisplay.setText("120", juce::dontSendNotification);
   tempoDisplay.onTextChange = [this]() {
-    if (processor.apvts.getRawParameterValue("syncToHost")->load() > 0.5f) return;
-    float val = juce::jlimit(40.0f, 200.0f, tempoDisplay.getText().getFloatValue());
-    if (auto* param = processor.apvts.getParameter("tempo"))
-      param->setValueNotifyingHost(processor.apvts.getParameterRange("tempo").convertTo0to1(val));
+      if (processor.apvts.getRawParameterValue("syncToHost")->load() > 0.5f) return;
+
+      // Update limits to match the new 1-500 range
+      float val = juce::jlimit(1.0f, 500.0f, tempoDisplay.getText().getFloatValue());
+      if (auto* param = processor.apvts.getParameter("tempo"))
+          param->setValueNotifyingHost(processor.apvts.getParameterRange("tempo").convertTo0to1(val));
   };
   addAndMakeVisible(tempoDisplay);
+
 
   // --- Sequencer Run ---
   sequencerRunButton.setButtonText("RUN");
@@ -614,7 +617,7 @@ void PCFEditor::paint(juce::Graphics& g) {
       float norm = (randPitch - pitchMin) / pitchRange;
       norm = juce::jlimit(0.0f, 1.0f, norm);
 
-      
+
       const int x = seqLeft + i * stepW;
       const int tickY = static_cast<int>(std::round(pitchY + offsetY + (1.0f - norm) * effectiveH));
       const int tickX = x + 2;

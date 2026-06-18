@@ -74,7 +74,7 @@ void StepSequencer::setStep(int index, float pitch, float accent, bool slide, bo
 }
 
 void StepSequencer::setTempo(float bpm) {
-  tempo = juce::jlimit(30.0f, 300.0f, bpm);
+  tempo = juce::jlimit(1.0f, 500.0f, bpm);
   updateTiming();
 }
 

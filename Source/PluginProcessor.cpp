@@ -25,7 +25,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PCFProcessor::createParamete
   params.push_back(std::make_unique<juce::AudioParameterFloat>("slewTime", "Slew Time",
       juce::NormalisableRange<float>(5.f, 500.f, 0.1f, 0.3f), 40.f));
   params.push_back(std::make_unique<juce::AudioParameterFloat>("tempo", "Tempo",
-      juce::NormalisableRange<float>(40.f, 200.f, 1.f), 120.f));
+      juce::NormalisableRange<float>(1.f, 500.f, 1.f), 120.f));
 
   // Gain parameter: -inf to +12dB. We use a range where 0 is unity gain (0dB)
   // and -100 represents effectively silence (-inf).
