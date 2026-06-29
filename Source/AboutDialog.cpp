@@ -52,7 +52,7 @@ void AboutDialog::setupUI()
     infoLabel.setColour(juce::Label::backgroundColourId, juce::Colours::transparentBlack);
 
     juce::String infoText;
-    infoText << "Version 1.0.2\n\n"
+    infoText << "Version 1.0.3\n\n"
          << "Created by: Reiner Prokein\n"
          << "License: Distributed under GNU GPL v3 (Source: MIT License)\n"
          << "Copyright © 2026 Reiner Prokein\n\n"

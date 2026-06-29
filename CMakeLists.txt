@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(PCF_ReBirth VERSION 1.0.2)
+project(PCF_ReBirth VERSION 1.0.3)
 
 # -------------------------------------------------------
 # macOS: Universal Binary (Intel + Apple Silicon)
@@ -30,7 +30,7 @@ juce_add_plugin(PCF_ReBirth
     PLUGIN_CODE             "Pcfr"
     FORMATS                 VST3 Standalone
     PRODUCT_NAME            "PCF_ReBirth"
-    VERSION                 "1.0.2"
+    VERSION                 "1.0.3"
     IS_SYNTH                FALSE
     NEEDS_MIDI_INPUT        TRUE
     NEEDS_MIDI_OUTPUT       FALSE
