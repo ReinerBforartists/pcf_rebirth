@@ -27,6 +27,15 @@ juce::AudioProcessorValueTreeState::ParameterLayout PCFProcessor::createParamete
   params.push_back(std::make_unique<juce::AudioParameterFloat>("tempo", "Tempo",
       juce::NormalisableRange<float>(1.f, 500.f, 1.f), 120.f));
 
+  // Glide amount as % of step duration (tempo-relative), not fixed ms.
+  // Range extends to 1000% to allow deliberate overshoot: above 100% the
+  // glide is still travelling when the next step's target arrives, giving
+  // a cascading multi-step smear at extreme settings. Default of 20%
+  // roughly matches the old fixed-20ms behaviour at a typical 120 BPM /
+  // 16th-note step rate, so existing patches don't suddenly sound different.
+  params.push_back(std::make_unique<juce::AudioParameterFloat>("glideAmount", "Glide Amount",
+      juce::NormalisableRange<float>(0.f, 1000.f, 0.1f), 20.f));
+
   // Gain parameter: -inf to +12dB. We use a range where 0 is unity gain (0dB)
   // and -100 represents effectively silence (-inf).
   params.push_back(std::make_unique<juce::AudioParameterFloat>("gain", "Gain",
@@ -71,7 +80,7 @@ PCFProcessor::PCFProcessor()
   }
 
   const juce::StringArray mainParamIds = {
-    "freq", "qAmt", "envMod", "slewTime", "tempo", "gain",
+    "freq", "qAmt", "envMod", "slewTime", "tempo", "gain", "glideAmount",
     "bypass", "sequencerRun", "syncToHost", "filterMode", "patternLength"
   };
 
@@ -96,7 +105,7 @@ PCFProcessor::PCFProcessor()
 // --- Destructor: Listener Cleanup ---
 PCFProcessor::~PCFProcessor() {
     const juce::StringArray mainParamIds = {
-      "freq", "qAmt", "envMod", "slewTime", "tempo", "gain",
+      "freq", "qAmt", "envMod", "slewTime", "tempo", "gain", "glideAmount",
       "bypass", "sequencerRun", "syncToHost", "filterMode", "patternLength"
     };
 
@@ -220,6 +229,7 @@ void PCFProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuff
     const int    numChannels = buffer.getNumChannels(); // cache outside loop
 
     float slewTimeMs = apvts.getRawParameterValue("slewTime")->load();
+    stepSequencer.setGlideAmount(apvts.getRawParameterValue("glideAmount")->load());
 
     // Calculate linear gain from dB value
     float gainDb = apvts.getRawParameterValue("gain")->load();

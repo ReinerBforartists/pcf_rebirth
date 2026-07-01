@@ -106,6 +106,38 @@ PCFEditor::PCFEditor(PCFProcessor& p)
   };
   addAndMakeVisible(tempoDisplay);
 
+  // --- Glide Amount (% of step duration, always visible & active) ---
+  glideAmountDisplay.setEditable(true);
+  glideAmountDisplay.setJustificationType(juce::Justification::centred);
+  glideAmountDisplay.setColour(juce::Label::backgroundColourId,          juce::Colour(0xff26263a));
+  glideAmountDisplay.setColour(juce::Label::outlineColourId,             juce::Colour(0xff35354d));
+  glideAmountDisplay.setColour(juce::Label::textColourId,                juce::Colour(0xffc8c8d8));
+  glideAmountDisplay.setColour(juce::TextEditor::backgroundColourId,     juce::Colour(0xff26263a));
+  glideAmountDisplay.setColour(juce::TextEditor::outlineColourId,        juce::Colour(0xff35354d));
+  glideAmountDisplay.setColour(juce::TextEditor::focusedOutlineColourId, juce::Colour(0xb23d8eff));
+  glideAmountDisplay.setColour(juce::TextEditor::textColourId,           juce::Colour(0xffc8c8d8));
+  glideAmountDisplay.setTooltip("Glide amount, as % of the current step duration. "
+                                 "Stays proportional regardless of tempo/step length.");
+  glideAmountDisplay.setText("GLD 20%", juce::dontSendNotification);
+  glideAmountDisplay.onTextChange = [this]() {
+      float val = juce::jlimit(0.0f, 1000.0f, glideAmountDisplay.getText().getFloatValue());
+      if (auto* param = processor.apvts.getParameter("glideAmount"))
+          param->setValueNotifyingHost(processor.apvts.getParameterRange("glideAmount").convertTo0to1(val));
+  };
+  // The displayed text carries a "GLD " prefix and "%" suffix for context,
+  // but the editor itself should only ever show/accept the bare number —
+  // otherwise getFloatValue() on "GLD 20%" parses as 0.
+  glideAmountDisplay.onEditorShow = [this]() {
+      if (auto* ed = glideAmountDisplay.getCurrentTextEditor()) {
+          juce::String bare = glideAmountDisplay.getText()
+                                  .fromFirstOccurrenceOf("GLD ", false, false)
+                                  .upToFirstOccurrenceOf("%", false, false);
+          ed->setText(bare, false);
+          ed->selectAll();
+      }
+  };
+  addAndMakeVisible(glideAmountDisplay);
+
 
   // --- Sequencer Run ---
   sequencerRunButton.setButtonText("RUN");
@@ -480,6 +512,12 @@ void PCFEditor::timerCallback() {
   tempoDisplay.setColour(juce::Label::textColourId, syncOn ? juce::Colour(0xff5a5a7a) : juce::Colour(0xffc8c8d8));
   tempoDisplay.setColour(juce::Label::outlineColourId, syncOn ? juce::Colour(0x6635354d) : juce::Colour(0xff35354d));
 
+  // Glide amount is independent of sync state — always editable, always active.
+  if (!glideAmountDisplay.isBeingEdited()) {
+    const float glideAmt = processor.apvts.getRawParameterValue("glideAmount")->load();
+    glideAmountDisplay.setText("GLD " + juce::String((int)std::round((double)glideAmt)) + "%", juce::dontSendNotification);
+  }
+
   // 2. Update Sequencer Run State
   sequencerRunButton.setToggleState(processor.apvts.getRawParameterValue("sequencerRun")->load() > 0.5f, juce::dontSendNotification);
 
@@ -650,8 +688,9 @@ void PCFEditor::resized() {
   filterSlopeHp.setBounds  (425, topY + 60, 36, 20);
 
   // Tempo-Section
-  tempoDisplay.setBounds    (475, topY + 8 , 60, 20);
-  syncToHostButton.setBounds(475, topY + 33, 70, 22);
+  tempoDisplay.setBounds       (475, topY + 8 , 60, 20);
+  syncToHostButton.setBounds   (475, topY + 33, 70, 22);
+  glideAmountDisplay.setBounds (475, topY + 60, 70, 20); // GLIDE %, permanently visible below SYNC
 
   // Gain Knob
   gainKnob.setBounds        (552, topY, knobW, knobH);

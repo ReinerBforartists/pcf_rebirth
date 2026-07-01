@@ -123,8 +123,21 @@ void StepSequencer::processSample(float slewTimeMs) {
 
   const float srF = static_cast<float>(sampleRate);
 
+  // Glide time is derived from the current step duration, not a fixed ms
+  // value, so the relative amount of "smear" stays constant across tempos.
+  // Clamped to [1ms, 90% of step] so it never collapses to a click at fast
+  // tempos nor stretches so far it never reaches the target note.
+  const float stepDurationMs = static_cast<float>(samplesPerStep / sampleRate * 1000.0);
+  const float glidePct       = glideAmount.load(std::memory_order_relaxed) * 0.01f;
+  // No upper cap: values above 100% deliberately overshoot the step
+  // boundary, so the glide is still mid-travel when the next step's target
+  // arrives — producing a cascading, never-quite-arriving smear across
+  // several steps at extreme settings. The exponential follower handles
+  // arbitrarily large tau safely, it just approaches its target more slowly.
+  const float effectiveGlideMs = juce::jmax(1.0f, stepDurationMs * glidePct);
+
   float targetPitch = currentGate ? currentPitch : 0.0f;
-  float glideTau    = glideTimeMs * 0.001f;
+  float glideTau    = effectiveGlideMs * 0.001f;
   float glideCoeff  = 1.0f - std::exp(-1.0f / (glideTau * srF));
   glidedPitch      += (targetPitch - glidedPitch) * glideCoeff;
   glidedPitchRatio  = std::pow(2.0f, glidedPitch / 12.0f);

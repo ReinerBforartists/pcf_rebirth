@@ -345,6 +345,7 @@ private:
   juce::ToggleButton syncToHostButton;
   juce::AudioProcessorValueTreeState::ButtonAttachment syncToHostAttach;
   juce::Label tempoDisplay;
+  juce::Label glideAmountDisplay; // % of step duration; permanently visible, tempo-relative
 
   juce::ToggleButton sequencerRunButton;
   juce::AudioProcessorValueTreeState::ButtonAttachment sequencerRunAttach;

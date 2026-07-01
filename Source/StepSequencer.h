@@ -41,6 +41,13 @@ class StepSequencer {
   bool getRandomEnabled() const   { return randomEnabled.load(); }
   float getRandomAmount() const   { return randomAmount.load(); }
 
+  // Glide amount as a percentage (0-100) of the current step duration, not a
+  // fixed millisecond value. This keeps the perceived "smear" between notes
+  // proportional regardless of tempo/step length — e.g. 20% always sounds
+  // like 20% of a step, whether that step is 125ms (fast) or 1000ms (slow).
+  void setGlideAmount(float pct) { glideAmount.store(juce::jlimit(0.0f, 1000.0f, pct)); }
+  float getGlideAmount() const   { return glideAmount.load(); }
+
   // Reads from the UI snapshot – written atomically by the audio thread after
   // each applyRandomizationToNext() call. Safe to call from the UI thread at
   // any time without data races or flicker.
@@ -163,7 +170,12 @@ class StepSequencer {
 
   float glidedPitch = 0.0f;
   float glidedPitchRatio = 1.0f; // cached: pow(2, glidedPitch/12) – updated per sample
-  float glideTimeMs = 20.0f;
+
+  // Glide amount, 0-100%, interpreted relative to the current step duration
+  // (see setGlideAmount() above). Replaces the old fixed-ms glide time, which
+  // caused glide to become inaudible at slow tempos and overly long at fast
+  // ones. UI-writable, audio-thread-read only.
+  std::atomic<float> glideAmount { 20.0f };
 
   double sampleRate = 44100.0;
   double samplesPerStep = 5512.5;
