@@ -60,6 +60,7 @@ In case you prefer the zipfile, or want to use the VST3 at MacOS or Linux:
 
 ### How to use
 1. **Set the Tempo:** Use the BPM display. You can manually enter a value or toggle **SYNC** to follow your DAW's transport.
+GLD stands for glide. The glide amount per cent relative to the bpm.
 2. **Program the Sequence:**
    - Click the **Step Buttons** (numbered 1–16) to turn gates on/off.
    - Adjust the **Vertical Sliders** below each button to set the pitch per step.
