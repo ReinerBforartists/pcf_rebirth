@@ -188,6 +188,10 @@ PCFEditor::PCFEditor(PCFProcessor& p)
   randomEnableButton.setColour(juce::ToggleButton::textColourId,        juce::Colour(0xff9a9ab0));
   randomEnableButton.setColour(juce::ToggleButton::tickColourId,        juce::Colour(0xff3d8eff));
   randomEnableButton.setColour(juce::ToggleButton::tickDisabledColourId,juce::Colour(0xff5a5a7a));
+  // Initialize from the current sequencer state so that closing and
+  // reopening the plugin editor (without a full state reload) reflects
+  // the actual RAND status instead of always resetting to off.
+  randomEnableButton.setToggleState(p.getStepSequencer().getRandomEnabled(), juce::dontSendNotification);
   randomEnableButton.onClick = [this]() {
     processor.getStepSequencer().setRandomEnabled(randomEnableButton.getToggleState());
   };

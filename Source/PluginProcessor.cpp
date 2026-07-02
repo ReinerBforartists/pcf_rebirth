@@ -373,7 +373,6 @@ void PCFProcessor::setStateInformation(const void* stateInformation, int sizeInB
     isDirty.store(wasDirty);
 
     // Restore randomization state (lives outside APVTS).
-    // Restore randomization state (lives outside APVTS).
     stepSequencer.setRandomEnabled(randEnabled);
     stepSequencer.setRandomAmount(randAmount);
 
