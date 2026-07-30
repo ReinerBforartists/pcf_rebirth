@@ -71,6 +71,12 @@ GLD stands for glide. The glide amount per cent relative to the bpm.
    - Toggle **RUN** to start or stop the sequencer independently of the DAW transport.
 5. **Manage Presets:** Use the preset browser at the bottom to navigate factory sounds or load a starting point. Customize freely and use **SAVE AS** to store your own patterns as user presets.
 
+## 🛠️ Troubleshooting
+
+In case the plugin crashes on Windows, install the latest redistributable files from Microsoft
+
+https://aka.ms/vs/17/release/vc_redist.x64.exe 
+
 ## 📜 License
 This project uses a dual-licensing approach:
 
