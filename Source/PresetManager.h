@@ -63,6 +63,9 @@ private:
     std::vector<SequencerPreset> factoryPresets;
     std::vector<SequencerPreset> userPresets;
 
+    // Guards initialize() against running twice — see PresetManager.cpp.
+    bool isInitialized = false;
+
     PresetManager(const PresetManager&) = delete;
     PresetManager& operator=(const PresetManager&) = delete;
 };

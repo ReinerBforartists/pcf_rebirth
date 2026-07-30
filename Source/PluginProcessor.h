@@ -111,6 +111,19 @@ private:
   static constexpr double svfBandLimit       = 0.99;   // SVF f coefficient hard limit
   static constexpr float  outputGain         = 2.0f;   // Post-filter output gain
 
+  // Guards against calling ensureInitialized() more than once, and against
+  // the (unlikely but possible) case of it being entered from two host
+  // callbacks at once — e.g. prepareToPlay() and createEditor() racing on
+  // different threads. Heavy/host-notifying init (preset loading, disk I/O)
+  // must never run inside the constructor: on strict VST3 hosts, calling
+  // setValueNotifyingHost() before the host has taken ownership of the
+  // freshly constructed processor is a known crash cause. Instead we run it
+  // lazily, the first time the host actually calls into us afterwards
+  // (prepareToPlay, setStateInformation, or createEditor) — at that point
+  // the object is guaranteed to be fully constructed and host-owned.
+  std::atomic<bool> isInitialized { false };
+  void ensureInitialized();
+
   void resetFilter();
   void updateSequencerTiming();
   void applyPresetToApvts(const SequencerPreset& preset);

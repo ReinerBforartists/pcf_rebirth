@@ -94,12 +94,31 @@ PCFProcessor::PCFProcessor()
     apvts.addParameterListener("stepGate" + idx, this);
   }
 
-  activePresetIndex = loadActivePresetIndexFromState();
-  loadPresetByIndex(activePresetIndex);
   resetFilter();
 
-  // Explicitly initialize after full construction to avoid premature notifications
+  // Deliberately NOT done here: loadPresetByIndex() (which calls
+  // setValueNotifyingHost() ~33 times) and presetManager.initialize()
+  // (disk I/O). Both are deferred to ensureInitialized(), which runs the
+  // first time the host calls prepareToPlay(), setStateInformation(), or
+  // createEditor() on us — see ensureInitialized() below for why.
+}
+
+// --- Lazy Initialization (VST3-host safe) ---
+// Runs preset loading and any disk I/O outside the constructor. Safe to call
+// from prepareToPlay(), setStateInformation(), and createEditor() — all of
+// these are callbacks the host makes on an object it already owns, so by the
+// time any of them run, it's guaranteed safe to notify the host of parameter
+// values. The compare_exchange makes this safe even if two of those entry
+// points end up racing (e.g. prepareToPlay() called from a processing setup
+// thread while createEditor() is called from the message thread).
+void PCFProcessor::ensureInitialized() {
+  bool expected = false;
+  if (!isInitialized.compare_exchange_strong(expected, true))
+    return; // already initialized (or another thread just claimed it)
+
   presetManager.initialize();
+  activePresetIndex = loadActivePresetIndexFromState();
+  loadPresetByIndex(activePresetIndex);
 }
 
 // --- Destructor: Listener Cleanup ---
@@ -135,6 +154,8 @@ void PCFProcessor::parameterChanged(const juce::String& parameterID, float /*new
 
 // --- Audio Preparation ---
 void PCFProcessor::prepareToPlay(double sampleRate, int /*samplesPerBlock*/) {
+  ensureInitialized();
+
   currentSampleRate = sampleRate;
 
   smoothedFreq.reset(sampleRate, smoothingTimeSecs);
@@ -352,6 +373,11 @@ void PCFProcessor::getStateInformation(juce::MemoryBlock& state) {
 }
 
 void PCFProcessor::setStateInformation(const void* stateInformation, int sizeInBytes) {
+  // Some hosts call setStateInformation() before prepareToPlay() (or with
+  // nullptr/0 bytes on first load) — make sure preset data/state is ready
+  // regardless of which callback the host reaches first.
+  ensureInitialized();
+
   std::unique_ptr<juce::XmlElement> xml(getXmlFromBinary(stateInformation, sizeInBytes));
   if (xml != nullptr) {
     auto stateTree = juce::ValueTree::fromXml(*xml);
@@ -487,7 +513,13 @@ bool PCFProcessor::overwriteCurrentUserPreset(int userIndex, const juce::String&
 }
 
 // --- Editor & Plugin Creation ---
-juce::AudioProcessorEditor* PCFProcessor::createEditor() { return new PCFEditor(*this); }
+juce::AudioProcessorEditor* PCFProcessor::createEditor() {
+  // The editor constructor reads preset data immediately (updatePresetList()),
+  // so if the host opens the UI before ever calling prepareToPlay() or
+  // setStateInformation(), we still need preset data ready by now.
+  ensureInitialized();
+  return new PCFEditor(*this);
+}
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() { return new PCFProcessor(); }
 
 // --- Preset Index Management ---

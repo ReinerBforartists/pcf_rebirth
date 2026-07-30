@@ -10,14 +10,23 @@
 #include "PresetManager.h"
 #include <algorithm>
 
-// Initializes factory presets and loads user presets from disk.
-PresetManager::PresetManager() {
+// Deliberately lightweight: PresetManager is a plain (non-pointer) member of
+// PCFProcessor, so this constructor runs automatically the instant PCFProcessor
+// is constructed — there is no way to defer it from the outside. It must NOT
+// do file I/O. The actual factory-preset setup and disk scan happen in
+// initialize(), which the owning PCFProcessor calls lazily later on.
+PresetManager::PresetManager() = default;
+
+// Loads factory presets and scans disk for user presets, then notifies
+// listeners. Safe to call once full construction (of the owning processor)
+// has finished. Guarded so a second call is a harmless no-op.
+void PresetManager::initialize() {
+    if (isInitialized)
+        return;
+    isInitialized = true;
+
     initializeFactoryPresets();
     loadUserPresetsFromDisk();
-}
-
-// Safely notifies listeners after all internal data is fully loaded.
-void PresetManager::initialize() {
     sendChangeMessage();
 }
 
